@@ -1,0 +1,14 @@
+D:\Home\Projects\CS\Zyte\bin\Debug\net10.0\Zyte.exe
+D:\Home\Projects\CS\Zyte\bin\Debug\net10.0\Zyte.deps.json
+D:\Home\Projects\CS\Zyte\bin\Debug\net10.0\Zyte.runtimeconfig.json
+D:\Home\Projects\CS\Zyte\bin\Debug\net10.0\Zyte.dll
+D:\Home\Projects\CS\Zyte\bin\Debug\net10.0\Zyte.pdb
+D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\Zyte.GeneratedMSBuildEditorConfig.editorconfig
+D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\Zyte.AssemblyInfoInputs.cache
+D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\Zyte.AssemblyInfo.cs
+D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\Zyte.csproj.CoreCompileInputs.cache
+D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\Zyte.dll
+D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\refint\Zyte.dll
+D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\Zyte.pdb
+D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\Zyte.genruntimeconfig.cache
+D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\ref\Zyte.dll
