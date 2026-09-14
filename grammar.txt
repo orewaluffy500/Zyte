@@ -5,6 +5,7 @@ body                : (NEWLINE* expr NEWLINE+)* END
 controls            : KW:if expr NEWLINE* LBRACE body RBRACE
                         (NEWLINE* KW:elseif expr NEWLINE* LBRACE body RBRACE)*
                         (NEWLINE* KW:else body)?
+                    : KW:while expr NEWLINE* LBRACE body RBRACE
 
 expr                : keyword
 
@@ -15,6 +16,18 @@ keyword             : KW:wln expr
                     : KW:rek expr
                     : KW:if expr KW:then expr KW:else expr
                     : KW:cpy term COMMA expr
+                    : KW:break
+                    : Kw:next
+                    : comp
+
+comp                : KW:lt expr, expr
+                    : KW:gt expr, expr
+                    : KW:eq expr, expr
+                    : KW:and expr, expr
+                    : KW:or expr, expr
+                    : KW:not expr
+                    : KW:xor expr, expr
+                    : term
 
 term                : DOT factor
                     : factor
@@ -23,3 +36,4 @@ factor              : INT|STRING
                     : LPAREN expr RPAREN
                     : PLUS|MINUS factor
                     : MUL factor
+                    : INCREMENT|DECREMENT factor

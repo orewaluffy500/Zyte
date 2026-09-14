@@ -12,3 +12,4 @@ D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\refint\Zyte.dll
 D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\Zyte.pdb
 D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\Zyte.genruntimeconfig.cache
 D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\ref\Zyte.dll
+D:\Home\Projects\CS\Zyte\obj\Debug\net10.0\Zyte.sourcelink.json

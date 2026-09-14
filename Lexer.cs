@@ -34,14 +34,28 @@ class Lexer(string source, string filename)
 
             else if (Current == '+')
             {
-                tokens.Add(new(TokenType.Plus, Pos.Copy()));
+                Position start = Pos.Copy();
+                TokenType tokType = TokenType.Plus;
                 Next();
+                if (Current == '='){
+                    tokType = TokenType.Increment;
+                    Next();
+                }
+
+                tokens.Add(new(tokType, start));
             }
 
             else if (Current == '-')
             {
-                tokens.Add(new(TokenType.Minus, Pos.Copy()));
+                Position start = Pos.Copy();
+                TokenType tokType = TokenType.Minus;
                 Next();
+                if (Current == '='){
+                    tokType = TokenType.Decrement;
+                    Next();
+                }
+
+                tokens.Add(new(tokType, start));
             }
 
             else if (Current == '*')

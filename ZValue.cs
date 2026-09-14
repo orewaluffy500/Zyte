@@ -22,12 +22,28 @@ abstract class ZValue
         return (T) this;
     }
 
+    public ZValue Repos(Position newPos)
+    {
+        Pos = newPos;
+        return this;
+    }
 
 
     /* ---- OPERATIONS ---- */
 
-    public virtual ZValue Negate() => Copy();
-    public virtual ZValue Positate() => Copy();
+    public ZValue IllegalOperation()
+    {
+        ErrorHandler.ValueError("illegal operation", $"illegal operation on value of type {GetLabelOf(GetType())}", Pos);
+        return Copy();
+    }
+
+    public virtual ZValue Negate()                      => IllegalOperation();
+    public virtual ZValue Positate()                    => IllegalOperation();
+    public virtual ZValue Increment()                   => IllegalOperation();
+    public virtual ZValue Decrement()                   => IllegalOperation();
+    public virtual ZValue IsEqualTo(ZValue other)       => IllegalOperation();
+    public virtual ZValue IsLessThan(ZValue other)      => IllegalOperation();
+    public virtual ZValue IsGreaterThan(ZValue other)   => IllegalOperation();
     public virtual bool IsTrue() => false;
     public virtual bool IsFalse() => !IsTrue();
 }
@@ -45,6 +61,11 @@ class ZInt(int value) : ZValue
         };
     }
 
+    public static ZInt FromCondition(bool condition)
+    {
+        return new ZInt(condition ? 1 : 0);
+    }
+
     public override string ToString()
     {
         return $"{Value}";
@@ -60,6 +81,34 @@ class ZInt(int value) : ZValue
     public override ZValue Positate()
     {
         return new ZInt(+Value);
+    }
+
+    public override ZValue Increment()
+    {
+        return new ZInt(Value + 1);
+    }
+
+    public override ZValue Decrement()
+    {
+        return new ZInt(Value - 1);
+    }
+
+    public override ZValue IsEqualTo(ZValue other)
+    {
+        if (other is not ZInt i) return IllegalOperation();
+        return FromCondition(Value == i.Value);
+    }
+
+    public override ZValue IsLessThan(ZValue other)
+    {
+        if (other is not ZInt i) return IllegalOperation();
+        return FromCondition(Value < i.Value);
+    }
+
+    public override ZValue IsGreaterThan(ZValue other)
+    {
+        if (other is not ZInt i) return IllegalOperation();
+        return FromCondition(Value > i.Value);
     }
 
     public override bool IsTrue()

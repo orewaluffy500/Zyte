@@ -10,7 +10,7 @@ abstract class ASTNode
 
 class BodyNode(ASTNode[] tree) : ASTNode
 {
-    public ASTNode[] Tree = tree;
+    public ASTNode[] Tree = [ .. tree.Where(x => x is not NoNode) ];
     public override string ToString()
     {
         return $"{{ {string.Join(' ', Tree)} }}";
@@ -55,6 +55,18 @@ class StringNode(Token value) : ASTNode
         return $"\"{Value.Value}\"";
     }
 }
+
+class ChangeValueNode(Token operToken, ASTNode value) : ASTNode
+{
+    public Token OperToken = operToken;
+    public ASTNode Value = value;
+
+    public override string ToString()
+    {
+        return $"(CHANGE {Value} USING {OperToken})";
+    }
+}
+
 
 
 class RegisterNode(ASTNode index) : ASTNode
@@ -114,6 +126,20 @@ class UnaryOperNode(Token opToken, ASTNode value) : ASTNode
 
 
 
+class BinaryOperNode(Token operToken, ASTNode left, ASTNode right) : ASTNode
+{
+    public Token OperToken = operToken;
+    public ASTNode Left = left;
+    public ASTNode Right = right;
+
+    public override string ToString()
+    {
+        return $"({Left} {OperToken} {Right})";
+    }
+}
+
+
+
 /* INPUT NODES */
 
 class ReadIntegerNode(ASTNode output) : ASTNode
@@ -148,6 +174,9 @@ class ReadKeyNode(ASTNode output) : ASTNode
 
 
 
+
+// FLOW RELATED
+
 class IfCase(ASTNode condition, ASTNode body) : ASTNode
 {
     public ASTNode Condition = condition;
@@ -180,5 +209,37 @@ class TernaryIfNode(ASTNode happyCase, ASTNode badCase, ASTNode condition) : AST
     public override string ToString()
     {
         return $"({Condition} ? {HappyCase} : {BadCase})";
+    }
+}
+
+
+
+
+// LOOP RELATED
+
+class WhileNode(ASTNode condition, ASTNode body) : ASTNode
+{
+    public ASTNode Condition = condition;
+    public ASTNode Body = body;
+
+    public override string ToString()
+    {
+        return $"(WHILE {Condition} DO {Body})";
+    }
+}
+
+class BreakNode : ASTNode
+{
+    public override string ToString()
+    {
+        return "(BREAK)";
+    }
+}
+
+class NextIterationNode : ASTNode
+{
+    public override string ToString()
+    {
+        return "(NEXT)";
     }
 }

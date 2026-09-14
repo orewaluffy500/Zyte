@@ -2,18 +2,21 @@ namespace zyte;
 
 
 
-class ExecutionFrame(BodyNode body, ExecutionFrame? back = null)
+class InterpretationContext(BodyNode bodyNode)
 {
-    public ExecutionFrame? Back = back;
-    public ASTNode[] Body = body.Tree;
-    public int Index = 0;
-    public ASTNode Current { get => Index < Body.Length ? Body[Index] : Body.Last(); }
-    public bool IsTop { get => Back is null; }
+    public BodyNode Body = bodyNode;
+    public virtual bool Running { get; set; } = true;
+    public virtual bool ShouldContinue { get => Running; }
+}
 
-    public ExecutionFrame GetLast()
-    {
-        if (Back is null) return this;
 
-        return Back.GetLast();
-    }
+class LoopContext(BodyNode bodyNode, bool running) : InterpretationContext(bodyNode)
+{
+    public override bool Running { get; set; } = running;
+    public override bool ShouldContinue { get => Running && !Continue; }
+    public bool Continue = false;
+}
+
+class WhileLoopContext(BodyNode bodyNode, bool running) : LoopContext(bodyNode, running)
+{
 }

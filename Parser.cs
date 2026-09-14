@@ -1,3 +1,5 @@
+using System.Formats.Asn1;
+
 namespace zyte;
 
 
@@ -65,11 +67,6 @@ class Parser(Token[] tokens, string filename)
             tree.Add(item: Controls());
         }
 
-        tree.Add(new EndNode()
-        {
-            Pos = Pos.Copy()
-        });
-
         Next();
 
         return new BodyNode([..tree]);
@@ -134,6 +131,17 @@ class Parser(Token[] tokens, string filename)
             return expr;
         }
 
+        else if (token.Type == TokenType.Increment || token.Type == TokenType.Decrement)
+        {
+            Next();
+            ASTNode value = Factor();
+
+            return new ChangeValueNode(token, value)
+            {
+                Pos = start
+            }; 
+        }
+
         return new NoNode();
     }
 
@@ -153,6 +161,28 @@ class Parser(Token[] tokens, string filename)
         }
 
         return Factor();
+    }
+
+    public ASTNode Comp()
+    {
+        Token token = Current;
+        Position start = token.Pos.Copy();
+
+        if (new string[]{ "lt", "gt", "eq" }.Contains(token.Value))
+        {
+            Next();
+            ASTNode left = Expr();
+
+            Eat(TokenType.Comma, Current.Pos.Copy());
+            ASTNode right = Expr();
+
+            return new BinaryOperNode(token, left, right)
+            {
+                Pos = start
+            };
+        }
+
+        return Term();
     }
 
     public ASTNode Keyword()
@@ -229,6 +259,26 @@ class Parser(Token[] tokens, string filename)
             };
         }
 
+        else if (token.IsKeyword("break"))
+        {
+            Next();
+
+            return new BreakNode()
+            {
+                Pos = start
+            };
+        }
+
+        else if (token.IsKeyword("next"))
+        {
+            Next();
+
+            return new NextIterationNode()
+            {
+                Pos = start
+            };
+        }
+
         // Ternary condition
         else if (token.IsKeyword("if"))
         {
@@ -256,7 +306,7 @@ class Parser(Token[] tokens, string filename)
             };
         }
 
-        return Term();
+        return Comp();
     }
 
     public ASTNode Expr()
@@ -333,6 +383,25 @@ class Parser(Token[] tokens, string filename)
             }
 
             return new IfNode([..cases], elseCase)
+            {
+                Pos = start
+            };
+        }
+
+
+
+        // While node
+        else if (token.IsKeyword("while"))
+        {
+            Next();
+
+            ASTNode condition = Expr();
+            EatNewlines();
+            Eat(TokenType.LeftBrace, Current.Pos.Copy());
+
+            ASTNode body = Body(TokenType.RightBrace);
+
+            return new WhileNode(condition, body)
             {
                 Pos = start
             };
