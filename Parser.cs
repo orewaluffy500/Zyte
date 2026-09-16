@@ -77,7 +77,7 @@ class Parser(Token[] tokens, string filename)
     public ASTNode Factor()
     {
         Token token = Current;
-        Position start = token.Pos.Copy();
+        Position start = token.Pos;
 
         if (token.Type == TokenType.Integer)
         {
@@ -142,13 +142,27 @@ class Parser(Token[] tokens, string filename)
             }; 
         }
 
-        return new NoNode();
+        else if (token.IsKeyword("not"))
+        {
+            Next();
+            ASTNode value = Factor();
+
+            return new NotNode(value)
+            {
+                Pos = start
+            };
+        }
+        
+        return new NoNode()
+        {
+            Pos = start
+        };
     }
 
     public ASTNode Term()
     {
         Token token = Current;
-        Position start = token.Pos.Copy();
+        Position start = token.Pos;
 
         if (token.Type == TokenType.Dot)
         {
@@ -166,29 +180,36 @@ class Parser(Token[] tokens, string filename)
     public ASTNode Comp()
     {
         Token token = Current;
-        Position start = token.Pos.Copy();
+        Position start = token.Pos;
 
         if (new string[]{ "lt", "gt", "eq" }.Contains(token.Value))
         {
-            Next();
-            ASTNode left = Expr();
-
-            Eat(TokenType.Comma, Current.Pos.Copy());
-            ASTNode right = Expr();
-
-            return new BinaryOperNode(token, left, right)
-            {
-                Pos = start
-            };
+            ASTNode binOp = BinaryOper();
+            binOp.Pos = start;
+            return binOp;
         }
 
         return Term();
     }
 
+    public ASTNode BinaryOper()
+    {
+        // The operation is expected to start at the operator
+        Token operToken = Current;
+
+        Next();
+        ASTNode left = Expr();
+        
+        Eat(TokenType.Comma, Current.Pos);
+        ASTNode right = Expr();
+
+        return new BinaryOperNode(operToken, left, right);
+    }
+
     public ASTNode Keyword()
     {
         Token token = Current;
-        Position start = token.Pos.Copy();
+        Position start = token.Pos;
 
         if (token.IsKeyword("cpy"))
         {
@@ -286,7 +307,7 @@ class Parser(Token[] tokens, string filename)
             ASTNode condition = Expr();
             if (!Current.IsKeyword("then"))
             {
-                ErrorHandler.SyntaxError("invalid syntax", $"expected 'then'", Current.Pos.Copy());
+                ErrorHandler.SyntaxError("invalid syntax", $"expected 'then'", Current.Pos);
             }
 
             Next();
@@ -294,7 +315,7 @@ class Parser(Token[] tokens, string filename)
             
             if (!Current.IsKeyword("else"))
             {
-                ErrorHandler.SyntaxError("invalid syntax", $"expected 'else'", Current.Pos.Copy());
+                ErrorHandler.SyntaxError("invalid syntax", $"expected 'else'", Current.Pos);
             }
 
             Next();
@@ -306,13 +327,37 @@ class Parser(Token[] tokens, string filename)
             };
         }
 
+
+        // LOGICAL EXPRESSIONS
+
+        else if (token.IsKeyword("and"))
+        {
+            ASTNode binOp = BinaryOper();
+            binOp.Pos = start;
+            return binOp;
+        }
+
+        else if (token.IsKeyword("or"))
+        {
+            ASTNode binOp = BinaryOper();
+            binOp.Pos = start;
+            return binOp;
+        }
+
+        else if (token.IsKeyword("xor"))
+        {
+            ASTNode binOp = BinaryOper();
+            binOp.Pos = start;
+            return binOp;
+        }
+
         return Comp();
     }
 
     public ASTNode Expr()
     {
         Token token = Current;
-        Position start = token.Pos.Copy();
+        Position start = token.Pos;
 
         if (token.Type == TokenType.LeftBrace)
         {
@@ -327,7 +372,7 @@ class Parser(Token[] tokens, string filename)
     public ASTNode Controls()
     {
         Token token = Current;
-        Position start = token.Pos.Copy();
+        Position start = token.Pos;
 
 
         if (token.IsKeyword("if"))
@@ -338,9 +383,8 @@ class Parser(Token[] tokens, string filename)
             // Head case
             ASTNode condition = Expr();
             EatNewlines();
-            Eat(TokenType.LeftBrace, Current.Pos.Copy());
 
-            ASTNode body = Body(TokenType.RightBrace);
+            ASTNode body = Expr();
             cases.Add(new(condition, body)
             {
                 Pos = start
@@ -351,15 +395,15 @@ class Parser(Token[] tokens, string filename)
             EatNewlines();
             while (Current.IsKeyword("elseif"))
             {
-                Position elseIfStart = Current.Pos.Copy();
+                Position elseIfStart = Current.Pos;
 
                 Next();
                 ASTNode elseIfCondition = Expr();
 
                 EatNewlines();
-                Eat(TokenType.LeftBrace, Current.Pos.Copy());
 
-                ASTNode elseIfBody = Body(TokenType.RightBrace);
+
+                ASTNode elseIfBody = Expr();
 
                 cases.Add(new(elseIfCondition, elseIfBody)
                 {
@@ -376,8 +420,8 @@ class Parser(Token[] tokens, string filename)
             {
                 Next();
                 EatNewlines();
-                Eat(TokenType.LeftBrace, Current.Pos.Copy());
-                ASTNode elseBody = Body(TokenType.RightBrace);
+
+                ASTNode elseBody = Expr();
 
                 elseCase = new(condition, elseBody);
             }
@@ -397,9 +441,8 @@ class Parser(Token[] tokens, string filename)
 
             ASTNode condition = Expr();
             EatNewlines();
-            Eat(TokenType.LeftBrace, Current.Pos.Copy());
 
-            ASTNode body = Body(TokenType.RightBrace);
+            ASTNode body = Expr();
 
             return new WhileNode(condition, body)
             {

@@ -2,10 +2,14 @@ main                : body
 
 body                : (NEWLINE* expr NEWLINE+)* END
 
-controls            : KW:if expr NEWLINE* LBRACE body RBRACE
-                        (NEWLINE* KW:elseif expr NEWLINE* LBRACE body RBRACE)*
-                        (NEWLINE* KW:else body)?
-                    : KW:while expr NEWLINE* LBRACE body RBRACE
+nodes               : expr
+                    : LBRACE body RBRACE
+
+controls            : KW:if expr NEWLINE* LBRACE nodes RBRACE
+                        (NEWLINE* KW:elseif expr NEWLINE* LBRACE nodes RBRACE)*
+                        (NEWLINE* KW:else nodes)?
+                    : KW:while expr NEWLINE* LBRACE nodes RBRACE
+                    : KW:for term = expr KW:to expr (KW:step expr)? nodes
 
 expr                : keyword
 
@@ -20,20 +24,20 @@ keyword             : KW:wln expr
                     : Kw:next
                     : comp
 
-comp                : KW:lt expr, expr
-                    : KW:gt expr, expr
-                    : KW:eq expr, expr
-                    : KW:and expr, expr
-                    : KW:or expr, expr
-                    : KW:not expr
-                    : KW:xor expr, expr
-                    : term
+comp                : KW:lt expr, expr                  # check value less than other
+                    : KW:gt expr, expr                  # check value greater than other
+                    : KW:eq expr, expr                  # equality check
+                    : KW:and expr, expr                 # logical and
+                    : KW:or expr, expr                  # logical or
+                    : KW:xor expr, expr                 # logical or (exclusive)
+                    : term                              # term
 
-term                : DOT factor
-                    : factor
+term                : DOT factor                        # register address
+                    : factor                            # factor
 
-factor              : INT|STRING
-                    : LPAREN expr RPAREN
-                    : PLUS|MINUS factor
-                    : MUL factor
-                    : INCREMENT|DECREMENT factor
+factor              : INT|STRING                        # values
+                    : LPAREN expr RPAREN                # sub-expressions
+                    : PLUS|MINUS factor                 # unary operation
+                    : MUL factor                        # dereference register
+                    : INCREMENT|DECREMENT factor        # increment or decrement
+                    : KW:not factor                     # logical not

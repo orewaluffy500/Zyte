@@ -243,3 +243,15 @@ class NextIterationNode : ASTNode
         return "(NEXT)";
     }
 }
+
+// LOGICAL EXPRESSIONS
+
+class NotNode(ASTNode value) : ASTNode
+{
+    public ASTNode Value = value;
+
+    public override string ToString()
+    {
+        return $"!{Value}";
+    }
+}

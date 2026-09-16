@@ -11,43 +11,44 @@ class Interpreter(BodyNode body)
         
         foreach (ASTNode node in programBody)
         {
-            Visit(node, context);
+            Visit(node);
         }
     }
 
-    public ZValue Visit(ASTNode node, InterpretationContext context)
+    public VisitResult Visit(ASTNode node)
     {
         // Console.WriteLine(node);
 
         // LITERALS & VALUES
-        if (node is IntegerNode intNode)                                    return VisitInteger(intNode, context);
-        else if (node is RegisterNode registerNode)                         return VisitRegister(registerNode, context);
-        else if (node is RegisterAccessNode registerAccessNode)             return VisitRegisterAccess(registerAccessNode, context);
-        else if (node is UnaryOperNode unaryOperNode)                       return VisitUnaryOper(unaryOperNode, context);
-        else if (node is BinaryOperNode binaryOperNode)                     return VisitBinaryOper(binaryOperNode, context);
-        else if (node is ChangeValueNode changeValueNode)                   return VisitChangeValue(changeValueNode, context);
-        else if (node is StringNode stringNode)                             return VisitString(stringNode, context);
+        if (node is IntegerNode intNode)                                    return VisitInteger(intNode);
+        else if (node is RegisterNode registerNode)                         return VisitRegister(registerNode);
+        else if (node is RegisterAccessNode registerAccessNode)             return VisitRegisterAccess(registerAccessNode);
+        else if (node is UnaryOperNode unaryOperNode)                       return VisitUnaryOper(unaryOperNode);
+        else if (node is BinaryOperNode binaryOperNode)                     return VisitBinaryOper(binaryOperNode);
+        else if (node is NotNode notNode)                                   return VisitNot(notNode);
+        else if (node is ChangeValueNode changeValueNode)                   return VisitChangeValue(changeValueNode);
+        else if (node is StringNode stringNode)                             return VisitString(stringNode);
         
         // FLOW-RELATED
-        else if (node is BodyNode bodyNode)                                 return VisitBody(bodyNode, context);
-        else if (node is IfNode ifNode)                                     return VisitIfStatement(ifNode, context);
-        else if (node is TernaryIfNode ternaryIfNode)                       return VisitTernaryIf(ternaryIfNode, context);
+        else if (node is BodyNode bodyNode)                                 return VisitBody(bodyNode);
+        else if (node is IfNode ifNode)                                     return VisitIfStatement(ifNode);
+        else if (node is TernaryIfNode ternaryIfNode)                       return VisitTernaryIf(ternaryIfNode);
 
         // LOOP-RELATED
-        else if (node is WhileNode whileNode)                               return VisitWhile(whileNode, context);
-        else if (node is BreakNode breakNode)                               return VisitBreak(breakNode, context);
-        else if (node is NextIterationNode nextIterationNode)               return VisitNextIteration(nextIterationNode, context);
+        else if (node is WhileNode whileNode)                               return VisitWhile(whileNode);
+        else if (node is BreakNode breakNode)                               return VisitBreak(breakNode);
+        else if (node is NextIterationNode nextIterationNode)               return VisitNextIteration(nextIterationNode);
 
         // INPUT / OUTPUT
-        else if (node is PrintNode printNode)                               return VisitPrintNode(printNode, context);
-        else if (node is ReadIntegerNode readIntegerNode)                   return VisitReadInteger(readIntegerNode, context);
-        else if (node is ReadCharNode readCharNode)                         return VisitReadChar(readCharNode, context);
-        else if (node is ReadKeyNode readKeyNode)                           return VisitReadKey(readKeyNode, context);
+        else if (node is PrintNode printNode)                               return VisitPrintNode(printNode);
+        else if (node is ReadIntegerNode readIntegerNode)                   return VisitReadInteger(readIntegerNode);
+        else if (node is ReadCharNode readCharNode)                         return VisitReadChar(readCharNode);
+        else if (node is ReadKeyNode readKeyNode)                           return VisitReadKey(readKeyNode);
 
         // MEMORY-RELATED (REGISTERS)
-        else if (node is CopyValueNode copyValueNode)                       return VisitCopyNode(copyValueNode, context);
+        else if (node is CopyValueNode copyValueNode)                       return VisitCopyNode(copyValueNode);
 
-        return new ZNull(node.Pos.Copy());
+        return new ZNull(node.Pos);
     }
 
     /* ---- HELPERS  ----------------------------- */
@@ -63,19 +64,17 @@ class Interpreter(BodyNode body)
 
     /* ---- VISITORS ----------------------------- */
 
-    public ZValue VisitBody(BodyNode node, InterpretationContext context)
+    public VisitResult VisitBody(BodyNode node)
     {
-        ZValue value = new ZNull(node.Pos.Copy());
+        ZValue value = new ZNull(node.Pos);
         ASTNode[] body = node.Tree;
 
         foreach (ASTNode subNode in body)
         {
-            ZValue output = Visit(subNode, context);
-            if (!context.ShouldContinue){
-                return value;
-            }
-            
-            value = output;
+            VisitResult result = Visit(subNode);
+            if (result.Flow != ExecutionFlow.Normal) return new(value, result.Flow);
+
+            value = result.Value;
         }
 
         return value;
@@ -83,9 +82,9 @@ class Interpreter(BodyNode body)
 
     // LITERALS & VALUES
 
-    public ZValue VisitRegister(RegisterNode node, InterpretationContext context)
+    public VisitResult VisitRegister(RegisterNode node)
     {
-        ZInt index = Expect<ZInt>(Visit(node.Index, context));
+        ZInt index = Expect<ZInt>(Visit(node.Index));
 
         return new ZRegister(index.Value)
         {
@@ -93,33 +92,33 @@ class Interpreter(BodyNode body)
         };
     }
 
-    public ZValue VisitRegisterAccess(RegisterAccessNode node, InterpretationContext context)
+    public VisitResult VisitRegisterAccess(RegisterAccessNode node)
     {
-        ZInt index = Expect<ZInt>(Visit(node.Index, context));
+        ZInt index = Expect<ZInt>(Visit(node.Index));
         ZInt value = Memory.GetRegister(index.Value);
 
         return value;
     }
 
-    public ZValue VisitInteger(IntegerNode node, InterpretationContext context)
+    public VisitResult VisitInteger(IntegerNode node)
     {
         return new ZInt((int)node.Value.Value!)
         {
-            Pos = node.Pos.Copy()
+            Pos = node.Pos
         };
     }
 
-    public ZValue VisitString(StringNode node, InterpretationContext context)
+    public VisitResult VisitString(StringNode node)
     {
         return new ZString((string)node.Value.Value!)
         {
-            Pos = node.Pos.Copy()
+            Pos = node.Pos
         };
     }
 
-    public ZValue VisitChangeValue(ChangeValueNode node, InterpretationContext context)
+    public VisitResult VisitChangeValue(ChangeValueNode node)
     {
-        ZValue value = Visit(node.Value, context);
+        ZValue value = Visit(node.Value);
 
         if (node.OperToken.Type == TokenType.Increment) return value.Increment().Repos(node.Pos);
         else if (node.OperToken.Type == TokenType.Decrement) return value.Decrement().Repos(node.Pos);
@@ -127,9 +126,9 @@ class Interpreter(BodyNode body)
         return value.Repos(node.Pos);
     }
 
-    public ZValue VisitUnaryOper(UnaryOperNode node, InterpretationContext context)
+    public VisitResult VisitUnaryOper(UnaryOperNode node)
     {
-        ZValue value = Visit(node.Value, context);
+        ZValue value = Visit(node.Value);
 
         if (node.OperToken.Type == TokenType.Minus) return value.Negate().Repos(node.Pos);
         else if (node.OperToken.Type == TokenType.Plus) return value.Positate().Repos(node.Pos);
@@ -137,74 +136,84 @@ class Interpreter(BodyNode body)
         return value.Repos(node.Pos);
     }
 
-    public ZValue VisitBinaryOper(BinaryOperNode node, InterpretationContext context)
+    public VisitResult VisitBinaryOper(BinaryOperNode node)
     {
         Token oper = node.OperToken;
-        ZValue left = Visit(node.Left, context);
-        ZValue right = Visit(node.Right, context);
+        ZValue left = Visit(node.Left);
+        ZValue right = Visit(node.Right);
 
-        Position pos = node.Pos.Copy();
+        Position pos = node.Pos;
 
         if (oper.IsKeyword("lt")) return left.IsLessThan(right).Repos(pos);
         else if (oper.IsKeyword("gt")) return left.IsGreaterThan(right).Repos(pos);
         else if (oper.IsKeyword("eq")) return left.IsEqualTo(right).Repos(pos);
+        else if (oper.IsKeyword("and")) return left.Anded(right);
+        else if (oper.IsKeyword("or")) return left.Ored(right);
+        else if (oper.IsKeyword("xor")) return left.ExclOred(right);
 
         return new ZNull(pos);
+    }
+
+    public VisitResult VisitNot(NotNode node)
+    {
+        VisitResult value = Visit(node.Value);
+
+        return value.Value.Notted();
     }
 
 
     // MEMORY-RELATED (REGISTERS)
 
-    public ZValue VisitCopyNode(CopyValueNode node, InterpretationContext context)
+    public VisitResult VisitCopyNode(CopyValueNode node)
     {
-        ZRegister register = Expect<ZRegister>(Visit(node.Register, context));
+        ZRegister register = Expect<ZRegister>(Visit(node.Register));
 
-        ZInt value = Expect<ZInt>(Visit(node.Value, context));
+        ZInt value = Expect<ZInt>(Visit(node.Value));
 
         Memory.SetRegister(register.Index, value);
 
-        return new ZNull(node.Pos.Copy());
+        return new ZNull(node.Pos);
     }
 
 
 
     // INPUT / OUTPUT
 
-    public ZValue VisitPrintNode(PrintNode node, InterpretationContext context)
+    public VisitResult VisitPrintNode(PrintNode node)
     {
-        ZValue message = Visit(node.Value, context);
+        ZValue message = Visit(node.Value);
 
         Console.Write(message);
         if (node.Newline) Console.WriteLine();
 
-        return new ZNull(node.Pos.Copy());
+        return new ZNull(node.Pos);
     }
 
-    public ZValue VisitReadInteger(ReadIntegerNode node, InterpretationContext context)
+    public VisitResult VisitReadInteger(ReadIntegerNode node)
     {
-        ZRegister output = Expect<ZRegister>(Visit(node.Output, context));
+        ZRegister output = Expect<ZRegister>(Visit(node.Output));
 
         string input = Console.ReadLine() ?? "0";
         int result = int.TryParse(input, out int i) ? i : 0;
 
         Memory.SetRegister(output.Index, result);
 
-        return new ZNull(node.Pos.Copy());
+        return new ZNull(node.Pos);
     }
 
-    public ZValue VisitReadChar(ReadCharNode node, InterpretationContext context)
+    public VisitResult VisitReadChar(ReadCharNode node)
     {
-        ZRegister output = Expect<ZRegister>(Visit(node.Output, context));
+        ZRegister output = Expect<ZRegister>(Visit(node.Output));
 
         int result = Console.Read();
 
         Memory.SetRegister(output.Index, result);
-        return new ZNull(node.Pos.Copy());
+        return new ZNull(node.Pos);
     }
 
-    public ZValue VisitReadKey(ReadKeyNode node, InterpretationContext context)
+    public VisitResult VisitReadKey(ReadKeyNode node)
     {
-        ZRegister output = Expect<ZRegister>(Visit(node.Output, context));
+        ZRegister output = Expect<ZRegister>(Visit(node.Output));
 
         var key = Console.ReadKey();
         Console.WriteLine();
@@ -214,35 +223,21 @@ class Interpreter(BodyNode body)
         // Return 1 if the pressed key was a modifier, 0 if not.
         return new ZInt(char.IsControl(key.KeyChar) ? 1 : 0)
         {
-            Pos = node.Pos.Copy()
+            Pos = node.Pos
         };
     }
 
     // LOOP-RELATED
 
 
-    public ZValue VisitBreak(BreakNode node, InterpretationContext context)
+    public VisitResult VisitBreak(BreakNode node)
     {
-        if (context is not LoopContext lc)
-        {
-            ErrorHandler.RTError("unexpected 'break'", "unexpected 'break' statement outside of loops", node.Pos);
-        } else {
-            lc.Running = false;
-        }
-
-        return new ZNull(node.Pos.Copy());
+        return new(new ZNull(node.Pos), ExecutionFlow.Break);
     }
 
-    public ZValue VisitNextIteration(NextIterationNode node, InterpretationContext context)
+    public VisitResult VisitNextIteration(NextIterationNode node)
     {
-        if (context is not LoopContext lc)
-        {
-            ErrorHandler.RTError("unexpected 'next'", "unexpected 'next' statement outside of loops", node.Pos);
-        } else {
-            lc.Continue = true;
-        }
-
-        return new ZNull(node.Pos.Copy());
+        return new(new ZNull(node.Pos), ExecutionFlow.Continue);
     }
 
 
@@ -250,21 +245,21 @@ class Interpreter(BodyNode body)
 
     // FLOW-RELATED
 
-    public ZValue VisitIfStatement(IfNode node, InterpretationContext context)
+    public VisitResult VisitIfStatement(IfNode node)
     {
         int index = 0;
-        ZValue result = new ZNull(node.Pos.Copy());
+        VisitResult result = new(new ZNull(node.Pos));
 
         while (index < node.Cases.Length)
         {
             IfCase ifCase = node.Cases[index];
 
-            ZValue conditionOutput = Visit(ifCase.Condition, context);
+            ZValue conditionOutput = Visit(ifCase.Condition);
 
             if (conditionOutput.IsTrue())
             {
-                result = Visit(ifCase.Body, context);
-                return result.Repos(node.Pos.Copy());
+                result = Visit(ifCase.Body);
+                return result.Repos(ifCase.Body.Pos);
             }
 
             index++;
@@ -272,52 +267,40 @@ class Interpreter(BodyNode body)
 
         if (node.ElseCase is not null)
         {
-            result = Visit(node.ElseCase.Body, context);
+            result = Visit(node.ElseCase.Body);
         }
 
-        return result.Repos(node.Pos.Copy());
+        return result.Repos(node.Pos);
     }
 
-    public ZValue VisitWhile(WhileNode node, InterpretationContext context)
+    public VisitResult VisitWhile(WhileNode node)
     {
-        ZValue conditionOutput = Visit(node.Condition, context);
-        ZValue result = new ZNull(node.Pos.Copy());
+        ZValue conditionOutput = Visit(node.Condition);
+        ZValue finalValue = new ZNull(node.Pos);
 
-        WhileLoopContext loopContext = new((BodyNode) node.Body, conditionOutput.IsTrue());
-
-        while (loopContext.Running)
+        while (conditionOutput.IsTrue())
         {
-            loopContext.Running = Visit(node.Condition, loopContext).IsTrue();
-            
-            foreach (ASTNode subNode in loopContext.Body.Tree)
-            {
-                ZValue output = Visit(subNode, loopContext);
-                
-                if (!loopContext.ShouldContinue)
-                {
-                    // if do continue then set it false otherwise keep it false
-                    loopContext.Continue = loopContext.Continue && false;
-                    break;
-                }
+            VisitResult result = Visit(node.Body);
+            if (result.Flow == ExecutionFlow.Break) break;
 
-                result = output;
-            }
+            finalValue = result.Value;
+            conditionOutput = Visit(node.Condition);
         }
 
-        return result.Repos(node.Pos.Copy());
+        return finalValue.Repos(node.Pos);
     }
 
 
 
-    public ZValue VisitTernaryIf(TernaryIfNode node, InterpretationContext context)
+    public VisitResult VisitTernaryIf(TernaryIfNode node)
     {
-        ZValue conditionOutput = Visit(node.Condition, context);
+        ZValue conditionOutput = Visit(node.Condition);
 
         if (conditionOutput.IsTrue())
         {
-            return Visit(node.HappyCase, context);
+            return Visit(node.HappyCase);
         }
 
-        return Visit(node.BadCase, context);
+        return Visit(node.BadCase);
     }
 }

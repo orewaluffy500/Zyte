@@ -1,0 +1,6 @@
+rei .1
+
+if eq *1, 10 wln "its ten"
+elseif eq *1, 5 wln "its five"
+elseif eq *1, 15 wln "its fifteen"
+else wln "its nto ten"

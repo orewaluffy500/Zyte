@@ -34,7 +34,7 @@ class Lexer(string source, string filename)
 
             else if (Current == '+')
             {
-                Position start = Pos.Copy();
+                Position start = Pos;
                 TokenType tokType = TokenType.Plus;
                 Next();
                 if (Current == '='){
@@ -47,7 +47,7 @@ class Lexer(string source, string filename)
 
             else if (Current == '-')
             {
-                Position start = Pos.Copy();
+                Position start = Pos;
                 TokenType tokType = TokenType.Minus;
                 Next();
                 if (Current == '='){
@@ -60,67 +60,67 @@ class Lexer(string source, string filename)
 
             else if (Current == '*')
             {
-                tokens.Add(new(TokenType.Mul, Pos.Copy()));
+                tokens.Add(new(TokenType.Mul, Pos));
                 Next();
             }
 
             else if (Current == '/')
             {
-                tokens.Add(new(TokenType.Div, Pos.Copy()));
+                tokens.Add(new(TokenType.Div, Pos));
                 Next();
             }
 
             else if (Current == '.')
             {
-                tokens.Add(new(TokenType.Dot, Pos.Copy()));
+                tokens.Add(new(TokenType.Dot, Pos));
                 Next();
             }
 
             else if (Current == ',')
             {
-                tokens.Add(new(TokenType.Comma, Pos.Copy()));
+                tokens.Add(new(TokenType.Comma, Pos));
                 Next();
             }
 
             else if (Current == '\n')
             {
-                tokens.Add(new(TokenType.Newline, Pos.Copy()));
+                tokens.Add(new(TokenType.Newline, Pos));
                 Next();
             }
 
             else if (Current == '#')
             {
-                tokens.Add(new(TokenType.Octal, Pos.Copy()));
+                tokens.Add(new(TokenType.Octal, Pos));
                 Next();
             }
 
             else if (Current == ':')
             {
-                tokens.Add(new(TokenType.Colon, Pos.Copy()));
+                tokens.Add(new(TokenType.Colon, Pos));
                 Next();
             }
 
             else if (Current == '(')
             {
-                tokens.Add(new(TokenType.LeftParen, Pos.Copy()));
+                tokens.Add(new(TokenType.LeftParen, Pos));
                 Next();
             }
 
             else if (Current == ')')
             {
-                tokens.Add(new(TokenType.RightParen, Pos.Copy()));
+                tokens.Add(new(TokenType.RightParen, Pos));
                 Next();
             }
 
             else if (Current == '{')
             {
-                tokens.Add(new(TokenType.LeftBrace, Pos.Copy()));
+                tokens.Add(new(TokenType.LeftBrace, Pos));
                 Next();
             }
 
             else if (Current == '}')
             {
-                tokens.Add(new(TokenType.RightBrace, Pos.Copy()));
+                tokens.Add(new(TokenType.RightBrace, Pos));
                 Next();
             }
 
@@ -152,7 +152,7 @@ class Lexer(string source, string filename)
     public Token MakeIdentifier()
     {
         string identifier = "";
-        Position start = Pos.Copy();
+        Position start = Pos;
 
         while (!IsEnd && (char.IsLetterOrDigit(Current) || Current == '_'))
         {
@@ -169,7 +169,7 @@ class Lexer(string source, string filename)
     public Token MakeInteger()
     {
         string integer = "";
-        Position start = Pos.Copy();
+        Position start = Pos;
 
         while (!IsEnd && char.IsDigit(Current))
         {
@@ -183,7 +183,7 @@ class Lexer(string source, string filename)
     public Token MakeString()
     {
         string str = "";
-        Position start = Pos.Copy();
+        Position start = Pos;
         Next();
 
         while (Current != '"')

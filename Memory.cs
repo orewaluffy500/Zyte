@@ -9,7 +9,7 @@ class Memory
     {
         Position position = new("<memory>");
 
-        Registers = [.. Enumerable.Range(1, regCount).Select(_ => new ZInt(0){ Pos = position.Copy() })];
+        Registers = [.. Enumerable.Range(1, regCount).Select(_ => new ZInt(0){ Pos = position })];
     }
 
     public int SanitizeIndex(int index)

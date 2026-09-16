@@ -10,6 +10,7 @@ class KeywordClass
         "cpy",                                      // MEMORY-RELATED (REGISTERS)
         "if", "else", "elseif", "then",             // FLOW-RELATED
         "while", "break", "next",                   // LOOP-RELATED
-        "eq", "gt", "lt"                            // CONDITIONAL
+        "eq", "gt", "lt",                           // CONDITIONAL
+        "and", "or", "xor", "not"                   // LOGICAL
     ];
 }

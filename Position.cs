@@ -1,7 +1,7 @@
 namespace zyte;
 
 
-class Position(string filename)
+struct Position(string filename)
 {
     public int Index = 0;
     public int Line = 1;
@@ -20,13 +20,8 @@ class Position(string filename)
         }
     }
 
-    public Position Copy()
+    public override readonly string ToString()
     {
-        return new(FileName)
-        {
-            Index = Index,
-            Line = Line,
-            Column = Column
-        };
+        return $"line {Line}, column {Column} of '{FileName}'";
     }
 }
