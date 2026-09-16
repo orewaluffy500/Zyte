@@ -1,0 +1,76 @@
+## registering
+
+cpy .1, 100
+wln *1 # outputs 100
+
+## printing
+
+wln VALUE # with newline
+w VALUE # without newline
+
+## captures
+
+.1 # capture value into register
+_ # discard captured value
+%0 # capture into argument
+out # capture into function result
+# wherever you see <capture>, these can be used there
+
+## reading
+
+rei <capture> # integer
+rech <capture> # character (0-255)
+rek <capture> # key (0-255), also the expressional output of this is 1 if the pressed key was a modifier otherwise 0.
+# expressional output i mean what it produces as an expression, not what it writes into <capture>
+
+## body
+
+{ wln "hello" } # code body
+wln "hello" # single-expression body
+
+# the last expression in a code body is the result value, by last i mean the last expression that gets executed
+# not the syntactic last expression.
+# for example:
+# here either hello or bye are the last expressions
+wln {
+    if A {
+        "hello"
+    } else {
+        "bye"
+    }
+}
+
+
+## loops
+
+while CONDITION BODY
+
+for <capture> = <expr> to <expr> step <expr> BODY # step is optional
+
+## some more expressions
+
+-<factor> # negate
++=<factor> # increase the factor and produce
+-=<factor> # decrease the factor and produce
+*<capture> # try to dereference a capture and get its value, you can also use an integer which is just seen as a register
+
+## functions
+
+func IDENTIFIER : ARGCOUNT BODY # you can omit the ": ARGCOUNT" part to get no-arg func (purely syntax-sugar)
+
+# calling a function:
+IDENTIFIER(ARGS): <capture>
+
+# <capture> is the return value register, the function can access this capture via the 'out' keyword and dereference it via '*out'
+# you can obviously use _ to ignore the value
+# you can omit '(ARGS)' to provide no args.
+
+# also you can store the address of a function in a register:
+cpy .1, IDENTIFIER
+
+# and then use it later
+(*1)(ARGS): <capture>
+
+# this isnt special to registers, a symbol access simply returns its address so you can also pass function addresses as args!
+
+# enjoy!
