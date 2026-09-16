@@ -280,3 +280,66 @@ class NotNode(ASTNode value) : ASTNode
         return $"!{Value}";
     }
 }
+
+// FUNCTION RELATED
+
+class SymbolAccessNode(Token identifierToken) : ASTNode
+{
+    public Token IdToken = identifierToken;
+
+    public override string ToString()
+    {
+        return $"(ACCESS {IdToken})";
+    }
+}
+
+class FuncOutputAccessNode : ASTNode
+{
+    public override string ToString()
+    {
+        return $"(FUNC_RESULT)";
+    }
+}
+
+class ArgumentAccessNode(ASTNode index) : ASTNode
+{
+    public ASTNode Index = index;
+
+    public override string ToString()
+    {
+        return $"ARG({Index})";
+    }
+}
+
+class FuncDefNode(Token identToken, Token? argCountToken, ASTNode body) : ASTNode
+{
+    public Token IdentifierToken = identToken;
+    public Token? ArgCountToken = argCountToken;
+    public ASTNode Body = body;
+
+    public override string ToString()
+    {
+        return $"(FUNC {IdentifierToken} TAKES {ArgCountToken} ARGS, DOES {Body})";
+    }
+}
+
+class CallNode(ASTNode addressNode, ASTNode[] arguments, ASTNode outputNode) : ASTNode
+{
+    public ASTNode Address = addressNode;
+    public ASTNode Output = outputNode;
+    public ASTNode[] Arguments = arguments;
+    public override string ToString()
+    {
+        return $"(CALL {Address}( {string.Join(", ", Arguments)} ) RESULT GOES INTO {Output})";
+    }
+}
+
+class ReturnNode(ASTNode? value) : ASTNode
+{
+    public ASTNode? Value = value;
+
+    public override string ToString()
+    {
+        return $"(RETURN {Value})";
+    }
+}

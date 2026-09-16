@@ -5,6 +5,7 @@ enum ExecutionFlow
     Normal,
     Break,
     Continue,
+    Return,
 }
 
 

@@ -94,9 +94,9 @@ class Lexer(string source, string filename)
                 Next();
             }
 
-            else if (Current == '#')
+            else if (Current == '%')
             {
-                tokens.Add(new(TokenType.Octal, Pos));
+                tokens.Add(new(TokenType.Modulo, Pos));
                 Next();
             }
 

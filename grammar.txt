@@ -10,6 +10,7 @@ controls            : KW:if expr NEWLINE* LBRACE nodes RBRACE
                         (NEWLINE* KW:else nodes)?
                     : KW:while expr NEWLINE* LBRACE nodes RBRACE
                     : KW:for term = expr KW:to expr (KW:step expr)? nodes
+                    : KW:func IDENTIFIER (COLON INTEGER)? expr
 
 expr                : keyword
 
@@ -22,6 +23,7 @@ keyword             : KW:wln expr
                     : KW:cpy term COMMA expr
                     : KW:break
                     : Kw:next
+                    : KW:return expr?
                     : comp
 
 comp                : KW:lt expr, expr                  # check value less than other
@@ -35,9 +37,15 @@ comp                : KW:lt expr, expr                  # check value less than 
 term                : DOT factor                        # register address
                     : factor                            # factor
 
-factor              : INT|STRING                        # values
+factor              : atom
+                    : atom (LPAREN (expr COMMA)* RPAREN)? COLON term
+
+atom                : INT|STRING                        # values
                     : LPAREN expr RPAREN                # sub-expressions
                     : PLUS|MINUS factor                 # unary operation
-                    : MUL factor                        # dereference register
+                    : MUL factor                        # dereference value
                     : INCREMENT|DECREMENT factor        # increment or decrement
                     : KW:not factor                     # logical not
+                    : IDENTIFIER                        # symbol access node
+                    : OCTAL factor                      # argument access
+                    : KW:out

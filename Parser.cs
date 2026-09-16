@@ -74,7 +74,7 @@ class Parser(Token[] tokens, string filename)
 
     // PARSING METHODS
 
-    public ASTNode Factor()
+    public ASTNode Atom()
     {
         Token token = Current;
         Position start = token.Pos;
@@ -152,12 +152,96 @@ class Parser(Token[] tokens, string filename)
                 Pos = start
             };
         }
+
+        else if (token.Type == TokenType.Identifier)
+        {
+            Next();
+            return new SymbolAccessNode(token)
+            {
+                Pos = start
+            };
+        }
+
+        else if (token.Type == TokenType.Modulo)
+        {
+            Next();
+            ASTNode index = Factor();
+
+            return new ArgumentAccessNode(index)
+            {
+                Pos = start
+            };
+        }
+
+        else if (token.IsKeyword("out"))
+        {
+            Next();
+            return new FuncOutputAccessNode()
+            {
+                Pos = start
+            };
+        }
         
         return new NoNode()
         {
             Pos = start
         };
     }
+
+    public ASTNode Factor()
+    {
+        Token token = Current;
+        Position start = token.Pos;
+
+        ASTNode result = Atom();
+
+        if (Current.Type == TokenType.Colon)
+        {
+            Next();
+            ASTNode returnValueNode = Term();
+
+            return new CallNode(result, [], returnValueNode)
+            {
+                Pos = start
+            };
+        }
+
+        else if (Current.Type == TokenType.LeftParen)
+        {
+            Next();
+
+            List<ASTNode> arguments = [];
+            if (Current.Type != TokenType.RightParen) arguments.Add(Expr());
+            
+            while (Current.Type == TokenType.Comma)
+            {
+                Next();
+                arguments.Add(Expr());
+            }
+            
+            if (Current.Type != TokenType.RightParen)
+            {
+                ErrorHandler.SyntaxError("invalid call", "expected closing ')' for arg list", Current.Pos);
+            }
+
+            Next();
+            if (Current.Type != TokenType.Colon)
+            {
+                ErrorHandler.SyntaxError("invalid call", "expected return register", Current.Pos);
+            }
+
+            Next();
+            ASTNode returnValueNode = Term();
+
+            return new CallNode(result, [..arguments], returnValueNode)
+            {
+                Pos = start
+            };
+        }
+
+        return result;
+    }
+
 
     public ASTNode Term()
     {
@@ -360,6 +444,24 @@ class Parser(Token[] tokens, string filename)
             return binOp;
         }
 
+        // return statement
+
+        else if (token.IsKeyword("return"))
+        {
+            Next();
+
+            ASTNode? value = null;
+            if (Current.Type != TokenType.Newline)
+            {
+                value = Expr();
+            }
+
+            return new ReturnNode(value)
+            {
+                Pos = start
+            };
+        }
+
         return Comp();
     }
 
@@ -488,6 +590,41 @@ class Parser(Token[] tokens, string filename)
             ASTNode body = Expr();
 
             return new ForNode(captureNode, startNode, endNode, body, stepNode){
+                Pos = start
+            };
+        }
+
+
+        // Function definition
+        else if (token.IsKeyword("func"))
+        {
+            Next();
+
+            if (Current.Type != TokenType.Identifier)
+            {
+                ErrorHandler.SyntaxError("invalid function definition", "expected identifier", Current.Pos);
+            }
+
+            Token identifierToken = Current;
+            Next();
+
+            Token? argumentCountNode = null;
+
+            if (Current.Type == TokenType.Colon)
+            {
+                Next();
+                if (Current.Type != TokenType.Integer)
+                {
+                    ErrorHandler.SyntaxError("invalid function definition", "expected argument count", Current.Pos);
+                }
+
+                argumentCountNode = Current;
+                Next();
+            }
+
+            ASTNode body = Expr();
+            return new FuncDefNode(identifierToken, argumentCountNode, body)
+            {
                 Pos = start
             };
         }

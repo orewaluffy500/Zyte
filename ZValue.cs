@@ -219,6 +219,33 @@ class ZString(string value) : ZValue
     }
 }
 
+class ZArgumentCapture(CallFrame frame, int index, Interpreter interpreter) : ZCapture(interpreter)
+{
+    public CallFrame Frame = frame;
+    public int Index = index;
+
+    public override ZValue Copy()
+    {
+        return new ZArgumentCapture(Frame, Index, Interpreter);
+    }
+
+    public override void Set(ZValue value)
+    {
+        ZValue arg = Frame.Arguments[Index];
+        if (arg is ZCapture c)
+        {
+            c.Set(value);
+        }
+    }
+
+    public override string ToString()
+    {
+        return $"ARG({Index})";
+    }
+}
+
+
+
 class ZNull(Position pos) : ZValue
 {
     public new Position Pos = pos;
@@ -231,5 +258,28 @@ class ZNull(Position pos) : ZValue
     public override string ToString()
     {
         return "null";
+    }
+}
+
+
+
+
+class ZFunctionDefinition(string id, int argCount, ASTNode body) : ZValue
+{
+    public string Id = id;
+    public int ArgCount = argCount;
+    public ASTNode Body = body;
+
+    public override ZValue Copy()
+    {
+        return new ZFunctionDefinition(Id, ArgCount, Body)
+        {
+            Pos = Pos
+        };
+    }
+
+    public override string ToString()
+    {
+        return $"<func {Id} : {ArgCount}";
     }
 }

@@ -4,6 +4,7 @@ class Interpreter(BodyNode body)
 {
     public BodyNode Program = body;
     public Memory Memory = new(80);
+    public List<CallFrame> CallStack = [];
     public void Interpret()
     {
         ASTNode[] programBody = Program.Tree;
@@ -49,6 +50,14 @@ class Interpreter(BodyNode body)
 
         // MEMORY-RELATED (REGISTERS)
         else if (node is CopyValueNode copyValueNode)                       return VisitCopyNode(copyValueNode);
+
+        // FUNC-RELATED
+        else if (node is SymbolAccessNode symbolAccessNode)                 return VisitSymbolAccess(symbolAccessNode);
+        else if (node is ArgumentAccessNode argumentAccessNode)             return VisitArgumentAccess(argumentAccessNode);
+        else if (node is FuncOutputAccessNode funcOutputAccessNode)         return VisitFuncOutputAccess(funcOutputAccessNode);
+        else if (node is ReturnNode returnNode)                             return VisitReturn(returnNode);
+        else if (node is CallNode callNode)                                 return VisitCall(callNode); 
+        else if (node is FuncDefNode funcDefNode)                           return VisitFuncDef(funcDefNode);
 
         return new ZNull(node.Pos);
     }
@@ -104,10 +113,13 @@ class Interpreter(BodyNode body)
 
     public VisitResult VisitRegisterAccess(RegisterAccessNode node)
     {
-        ZInt index = Expect<ZInt>(Visit(node.Index));
-        ZInt value = Memory.GetRegister(index.Value);
+        ZValue value = Visit(node.Index);
 
-        return value;
+        if (value is ZRegister r) return Memory.GetRegister(r.Index);
+        else if (value is ZInt i) return Memory.GetRegister(i.Value);
+        else if (value is ZArgumentCapture ac) return ac.Frame.GetArgument(ac.Index, node.Pos);
+
+        return new ZNull(node.Pos);
     }
 
     public VisitResult VisitInteger(IntegerNode node)
@@ -292,6 +304,7 @@ class Interpreter(BodyNode body)
         {
             VisitResult result = Visit(node.Body);
             if (result.Flow == ExecutionFlow.Break) break;
+            else if (result.Flow != ExecutionFlow.Normal && result.Flow != ExecutionFlow.Continue) return result;
 
             finalValue = result.Value;
             conditionOutput = Visit(node.Condition);
@@ -319,6 +332,7 @@ class Interpreter(BodyNode body)
             capture.Set(counter);
             VisitResult result = Visit(node.Body);
             if (result.Flow == ExecutionFlow.Break) break;
+            else if (result.Flow != ExecutionFlow.Normal && result.Flow != ExecutionFlow.Continue) return result;
 
             counter = counter.AddTo(stepValue);
         }
@@ -338,5 +352,98 @@ class Interpreter(BodyNode body)
         }
 
         return Visit(node.BadCase);
+    }
+
+    // FUNC-RELATED
+
+    public VisitResult VisitSymbolAccess(SymbolAccessNode node)
+    {
+        string identifier = (node.IdToken.Value as string)!;
+
+        if (Memory.Definitions.TryGetValue(identifier, out var i))
+        {
+            return new ZInt(i);
+        }
+        
+        ErrorHandler.RTError("undefined symbol", $"undefined symbol: '{identifier}'", node.Pos);
+        return new ZNull(node.Pos);
+    }
+
+    public VisitResult VisitFuncOutputAccess(FuncOutputAccessNode node)
+    {
+        if (CallStack.Count < 1)
+        {
+            ErrorHandler.RTError("invalid output access", "cannot access function output outside of function call!", node.Pos);
+        }
+
+        return CallStack[^1].Output;
+    }
+
+    public VisitResult VisitArgumentAccess(ArgumentAccessNode node)
+    {
+        if (CallStack.Count < 1)
+        {
+            ErrorHandler.RTError("invalid argument access", "cannot access function argument outside of function call!", node.Pos);
+        }
+
+        ZInt index = Expect<ZInt>(Visit(node.Index));
+        return CallStack[^1].GetArgumentRef(index.Value, node.Pos);
+    }
+
+    public VisitResult VisitReturn(ReturnNode node)
+    {
+        if (CallStack.Count < 1)
+        {
+            ErrorHandler.RTError("invalid return", "cannot return outside of function", node.Pos);
+        }
+
+
+        if (node.Value is not null)
+        {
+            ZValue returnValue = Visit(node.Value!);
+            CallStack[^1].Output.Set(returnValue);
+        }
+
+        return new VisitResult(new ZNull(node.Pos), ExecutionFlow.Return);
+    }
+
+    public VisitResult VisitCall(CallNode node)
+    {
+        ZInt address = Expect<ZInt>(Visit(node.Address));
+        ZCapture output = Expect<ZCapture>(Visit(node.Output));
+        
+        List<ZValue> argumentList = [];
+        foreach (ASTNode argumentNode in node.Arguments)
+        {
+            argumentList.Add(Visit(argumentNode));
+        }
+
+        ZValue[] arguments = [..argumentList];
+
+        ZFunctionDefinition func = Expect<ZFunctionDefinition>(Memory.GetExternal(address.Value, node.Pos));
+
+        if (arguments.Length != func.ArgCount)
+        {
+            ErrorHandler.RTError("invalid call", $"expected {func.ArgCount} arguments, got {arguments.Length}", node.Pos);
+        }
+
+        CallStack.Add(new(arguments, output, this));
+        Visit(func.Body);
+        CallStack.RemoveAt(CallStack.Count - 1);
+
+        return new ZNull(node.Pos);
+    }
+
+    public VisitResult VisitFuncDef(FuncDefNode node)
+    {
+        string identifier = (node.IdentifierToken.Value as string)!;
+        int argumentCount = (node.ArgCountToken is not null ? node.ArgCountToken.Value as int? : null) ?? 0;
+
+        int address = Memory.AddressCounter++;
+
+        Memory.SetExternal(address, new ZFunctionDefinition(identifier, argumentCount, node.Body){ Pos = node.Pos }, node.Pos);
+        Memory.Definitions[identifier] = address;
+
+        return new ZNull(node.Pos);
     }
 }
