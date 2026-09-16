@@ -73,4 +73,25 @@ cpy .1, IDENTIFIER
 
 # this isnt special to registers, a symbol access simply returns its address so you can also pass function addresses as args!
 
+## conditionals
+
+eq A, B # produces 1 if true, 0 if false
+gt A, B
+lt A, B
+
+## logicals
+
+and A, B
+or A, B
+xor A, B
+not X # 1 if false, 0 if true
+
+## if statements
+if <expr> BODY
+elseif <expr2> BODY
+elseif <expr3> BODY
+...
+else BODY
+
+
 # enjoy!
