@@ -58,6 +58,12 @@ class Lexer(string source, string filename)
                 tokens.Add(new(tokType, start));
             }
 
+            else if (Current == '=')
+            {
+                tokens.Add(new(TokenType.Equals, Pos));
+                Next();
+            }
+
             else if (Current == '*')
             {
                 tokens.Add(new(TokenType.Mul, Pos));

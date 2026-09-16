@@ -28,6 +28,7 @@ class Interpreter(BodyNode body)
         else if (node is NotNode notNode)                                   return VisitNot(notNode);
         else if (node is ChangeValueNode changeValueNode)                   return VisitChangeValue(changeValueNode);
         else if (node is StringNode stringNode)                             return VisitString(stringNode);
+        else if (node is DiscardCaptureNode discardCaptureNode)             return VisitDiscardCapture(discardCaptureNode);
         
         // FLOW-RELATED
         else if (node is BodyNode bodyNode)                                 return VisitBody(bodyNode);
@@ -35,6 +36,7 @@ class Interpreter(BodyNode body)
         else if (node is TernaryIfNode ternaryIfNode)                       return VisitTernaryIf(ternaryIfNode);
 
         // LOOP-RELATED
+        else if (node is ForNode forNode)                                   return VisitFor(forNode);
         else if (node is WhileNode whileNode)                               return VisitWhile(whileNode);
         else if (node is BreakNode breakNode)                               return VisitBreak(breakNode);
         else if (node is NextIterationNode nextIterationNode)               return VisitNextIteration(nextIterationNode);
@@ -86,7 +88,15 @@ class Interpreter(BodyNode body)
     {
         ZInt index = Expect<ZInt>(Visit(node.Index));
 
-        return new ZRegister(index.Value)
+        return new ZRegister(index.Value, this)
+        {
+            Pos = node.Pos
+        };
+    }
+
+    public VisitResult VisitDiscardCapture(DiscardCaptureNode node)
+    {
+        return new ZDiscardCapture(this)
         {
             Pos = node.Pos
         };
@@ -166,11 +176,11 @@ class Interpreter(BodyNode body)
 
     public VisitResult VisitCopyNode(CopyValueNode node)
     {
-        ZRegister register = Expect<ZRegister>(Visit(node.Register));
+        ZCapture capture = Expect<ZCapture>(Visit(node.Register));
 
-        ZInt value = Expect<ZInt>(Visit(node.Value));
+        ZValue value = Visit(node.Value);
 
-        Memory.SetRegister(register.Index, value);
+        capture.Set(value);
 
         return new ZNull(node.Pos);
     }
@@ -191,34 +201,34 @@ class Interpreter(BodyNode body)
 
     public VisitResult VisitReadInteger(ReadIntegerNode node)
     {
-        ZRegister output = Expect<ZRegister>(Visit(node.Output));
+        ZCapture output = Expect<ZCapture>(Visit(node.Output));
 
         string input = Console.ReadLine() ?? "0";
         int result = int.TryParse(input, out int i) ? i : 0;
 
-        Memory.SetRegister(output.Index, result);
+        output.Set(new ZInt(result){ Pos = node.Pos });
 
         return new ZNull(node.Pos);
     }
 
     public VisitResult VisitReadChar(ReadCharNode node)
     {
-        ZRegister output = Expect<ZRegister>(Visit(node.Output));
+        ZCapture output = Expect<ZCapture>(Visit(node.Output));
 
         int result = Console.Read();
 
-        Memory.SetRegister(output.Index, result);
+        output.Set(new ZInt(result){ Pos = node.Pos });
         return new ZNull(node.Pos);
     }
 
     public VisitResult VisitReadKey(ReadKeyNode node)
     {
-        ZRegister output = Expect<ZRegister>(Visit(node.Output));
+        ZCapture output = Expect<ZCapture>(Visit(node.Output));
 
         var key = Console.ReadKey();
         Console.WriteLine();
 
-        Memory.SetRegister(output.Index, key.KeyChar);
+        output.Set(new ZInt(key.KeyChar){ Pos = node.Pos });
 
         // Return 1 if the pressed key was a modifier, 0 if not.
         return new ZInt(char.IsControl(key.KeyChar) ? 1 : 0)
@@ -288,6 +298,32 @@ class Interpreter(BodyNode body)
         }
 
         return finalValue.Repos(node.Pos);
+    }
+
+    public VisitResult VisitFor(ForNode node)
+    {
+        ZCapture capture = Expect<ZCapture>(Visit(node.Capture));
+
+        ZValue start = Visit(node.Start);
+        ZValue end = Visit(node.End);
+        ZValue counter = start.Copy();
+
+        bool startLessThanEnd = start.IsLessOrEqualTo(end).IsTrue();
+
+        ZValue stepValue = node.Step is not null ? Visit(node.Step!) : new ZInt(1);
+
+        bool DoContinue() => (stepValue.IsGreaterOrEqualTo(new ZInt(0)).IsTrue() ? counter.IsLessOrEqualTo(end) : counter.IsGreaterOrEqualTo(end)).IsTrue();
+
+        while (DoContinue())
+        {
+            capture.Set(counter);
+            VisitResult result = Visit(node.Body);
+            if (result.Flow == ExecutionFlow.Break) break;
+
+            counter = counter.AddTo(stepValue);
+        }
+
+        return new ZNull(node.Pos);
     }
 
 

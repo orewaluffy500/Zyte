@@ -79,6 +79,15 @@ class RegisterNode(ASTNode index) : ASTNode
     }
 }
 
+class DiscardCaptureNode : ASTNode
+{
+    public override string ToString()
+    {
+        return $"DISCARD()";
+    }
+}
+
+
 
 class RegisterAccessNode(ASTNode index) : ASTNode
 {
@@ -227,6 +236,22 @@ class WhileNode(ASTNode condition, ASTNode body) : ASTNode
         return $"(WHILE {Condition} DO {Body})";
     }
 }
+
+class ForNode(ASTNode capture, ASTNode start, ASTNode end, ASTNode body, ASTNode? step) : ASTNode
+{
+    public ASTNode Capture = capture;
+    public ASTNode Start = start;
+    public ASTNode End = end;
+    public ASTNode Body = body;
+    public ASTNode? Step = step;
+
+    public override string ToString()
+    {
+        return $"(FOR {Capture} = {Start} to {End} step {Step} do {Body})";
+    }
+}
+
+
 
 class BreakNode : ASTNode
 {

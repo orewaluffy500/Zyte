@@ -174,6 +174,15 @@ class Parser(Token[] tokens, string filename)
             };
         }
 
+        else if (token.IsKeyword("_"))
+        {
+            Next();
+            return new DiscardCaptureNode()
+            {
+                Pos = start
+            };
+        }
+
         return Factor();
     }
 
@@ -446,6 +455,39 @@ class Parser(Token[] tokens, string filename)
 
             return new WhileNode(condition, body)
             {
+                Pos = start
+            };
+        }
+
+        // For node
+        else if (token.IsKeyword("for"))
+        {
+            Next();
+
+            ASTNode captureNode = Expr();
+
+            Eat(TokenType.Equals, Current.Pos);
+
+            ASTNode startNode = Expr();
+
+            if (!Current.IsKeyword("to"))
+            {
+                ErrorHandler.SyntaxError("invalid for-loop syntax", "expected 'to' after start expression", Current.Pos);    
+            }
+            
+            Next();
+            ASTNode endNode = Expr();
+            ASTNode? stepNode = null;
+
+            if (Current.IsKeyword("step"))
+            {
+                Next();
+                stepNode = Expr();
+            }
+
+            ASTNode body = Expr();
+
+            return new ForNode(captureNode, startNode, endNode, body, stepNode){
                 Pos = start
             };
         }

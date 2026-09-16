@@ -9,7 +9,9 @@ abstract class ZValue
         {nameof(ZValue), "any"},
         {nameof(ZInt), "integer"},
         {nameof(ZString), "string"},
-        {nameof(ZNull), "null"}
+        {nameof(ZCapture), "capture"},
+        {nameof(ZDiscardCapture), "discard"},
+        {nameof(ZNull), "null"},
     };
 
     public static string GetLabelOf(Type type) => Labels.TryGetValue(type.Name, out var s) ? s : "unknown";
@@ -37,20 +39,37 @@ abstract class ZValue
         return Copy();
     }
 
-    public virtual ZValue Negate()                      => IllegalOperation("negate");
-    public virtual ZValue Positate()                    => IllegalOperation("positate");
-    public virtual ZValue Increment()                   => IllegalOperation("increment");
-    public virtual ZValue Decrement()                   => IllegalOperation("decrement");
-    public virtual ZValue IsEqualTo(ZValue other)       => IllegalOperation("equals");
-    public virtual ZValue IsLessThan(ZValue other)      => IllegalOperation("less than");
-    public virtual ZValue IsGreaterThan(ZValue other)   => IllegalOperation("greater than");
-    public virtual ZValue Notted()                      => IllegalOperation("not");
-    public virtual ZValue Anded(ZValue other)           => ZInt.FromCondition(IsTrue() && other.IsTrue());
-    public virtual ZValue Ored(ZValue other)            => ZInt.FromCondition(IsTrue() || other.IsTrue());
-    public virtual ZValue ExclOred(ZValue other)        => ZInt.FromCondition(IsTrue() != other.IsTrue());
+    public virtual ZValue Negate()                              => IllegalOperation("negate");
+    public virtual ZValue Positate()                            => IllegalOperation("positate");
+    public virtual ZValue Increment()                           => IllegalOperation("increment");
+    public virtual ZValue Decrement()                           => IllegalOperation("decrement");
+    public virtual ZValue IsEqualTo(ZValue other)               => IllegalOperation("equals");
+    public virtual ZValue IsLessThan(ZValue other)              => IllegalOperation("less than");
+    public virtual ZValue IsGreaterThan(ZValue other)           => IllegalOperation("greater than");
+    public virtual ZValue AddTo(ZValue other)                   => IllegalOperation("add");
+    public virtual ZValue Notted()                              => IllegalOperation("not");
+    public virtual ZValue IsGreaterOrEqualTo(ZValue other)      => ZInt.FromCondition(IsGreaterThan(other).IsTrue() || IsEqualTo(other).IsTrue());
+    public virtual ZValue IsLessOrEqualTo(ZValue other)         => ZInt.FromCondition(IsLessThan(other).IsTrue() || IsEqualTo(other).IsTrue());
+    public virtual ZValue Anded(ZValue other)                   => ZInt.FromCondition(IsTrue() && other.IsTrue());
+    public virtual ZValue Ored(ZValue other)                    => ZInt.FromCondition(IsTrue() || other.IsTrue());
+    public virtual ZValue ExclOred(ZValue other)                => ZInt.FromCondition(IsTrue() != other.IsTrue());
     public virtual bool IsTrue() => false;
     public virtual bool IsFalse() => !IsTrue();
 }
+
+abstract class ZCapture(Interpreter interpreter) : ZValue
+{
+    public Interpreter Interpreter = interpreter;
+
+    public abstract void Set(ZValue value);
+}
+
+
+
+
+
+
+
 
 
 class ZInt(int value) : ZValue
@@ -97,6 +116,12 @@ class ZInt(int value) : ZValue
         return new ZInt(Value - 1);
     }
 
+    public override ZValue AddTo(ZValue other)
+    {
+        if (other is not ZInt i) return IllegalOperation("add");
+        return new ZInt(Value + i.Value);
+    }
+
     public override ZValue IsEqualTo(ZValue other)
     {
         if (other is not ZInt i) return IllegalOperation("equals");
@@ -126,23 +151,48 @@ class ZInt(int value) : ZValue
     }
 }
 
-class ZRegister(int index) : ZValue
+class ZRegister(int index, Interpreter interpreter) : ZCapture(interpreter)
 {
     public int Index = index;
 
     public override ZValue Copy()
     {
-        return new ZRegister(Index)
+        return new ZRegister(Index, Interpreter);
+    }
+
+    public override void Set(ZValue value)
+    {
+        if (value is not ZInt)
         {
-            Pos = Pos
-        };
+            ErrorHandler.RTError("type mismatch", "expected integer value to set register", Pos);
+        }
+
+        Interpreter.Memory.SetRegister(Index, (ZInt) value);
     }
 
     public override string ToString()
     {
-        return $"<reg .{Index}>";
+        return $"<reg {Index}>";
     }
 }
+
+class ZDiscardCapture(Interpreter interpreter) : ZCapture(interpreter)
+{
+    public override ZValue Copy()
+    {
+        return new ZDiscardCapture(Interpreter);
+    }
+
+    public override void Set(ZValue value)
+    {
+    }
+
+    public override string ToString()
+    {
+        return "DISCARD";
+    }
+}
+
 
 class ZString(string value) : ZValue
 {
