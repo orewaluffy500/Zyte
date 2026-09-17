@@ -1,0 +1,15 @@
+func range : 1 {
+    cpy out, [:%0]
+    for .10 = 0 to -=%0 {
+        *out->*10 = *10
+    }
+}
+
+range(20): .1
+wln ~*1
+range(10): .2
+wln ~*2
+range(50): .3
+wln ~*3
+range(5): .1
+wln ~*1
