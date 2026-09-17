@@ -39,16 +39,17 @@ term                : DOT factor                        # register address
 
 factor              : atom
                     : atom (LPAREN (expr COMMA)* RPAREN)? COLON term
+                    : atom ARROW atom (EQ expr)?
 
-atom                : INT|STRING                        # values
-                    : LPAREN expr RPAREN                # sub-expressions
-                    : PLUS|MINUS factor                 # unary operation
-                    : MUL factor                        # dereference value
-                    : INCREMENT|DECREMENT factor        # increment or decrement
-                    : KW:not factor                     # logical not
-                    : IDENTIFIER                        # symbol access node
-                    : OCTAL factor                      # argument access
+atom                : INT|STRING                          # values
+                    : LPAREN expr RPAREN                  # sub-expressions
+                    : PLUS|MINUS atom                     # unary operation
+                    : MUL atom                            # dereference value
+                    : INCREMENT|DECREMENT atom            # increment or decrement
+                    : KW:not atom                         # logical not
+                    : IDENTIFIER                          # symbol access node
+                    : MODULO atom                         # argument access
                     : KW:out
-                    : LSQB (expr COMMA)* RSQB           # simple array
-                    : LSQB COLON expr RSQB              # reserve n elements as array
-                    : SQUIGGLE factor                   # dereference external address (SQUIGGLE is '~')
+                    : LSQB (expr COMMA)* RSQB             # simple array
+                    : LSQB COLON expr RSQB                # reserve n elements as array
+                    : SQUIGGLE atom                       # dereference external address (SQUIGGLE is '~')

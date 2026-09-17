@@ -56,6 +56,9 @@ for <capture> = <expr> to <expr> step <expr> BODY # step is optional
 
 ## functions
 
+
+
+
 func IDENTIFIER : ARGCOUNT BODY # you can omit the ": ARGCOUNT" part to get no-arg func (purely syntax-sugar)
 
 # calling a function:
@@ -72,6 +75,12 @@ cpy .1, IDENTIFIER
 (*1)(ARGS): <capture>
 
 # this isnt special to registers, a symbol access simply returns its address so you can also pass function addresses as args!
+
+# you can access a function's parameters via the modulo operator:
+wln %0 # prints the first parameter
+
+
+
 
 ## conditionals
 
@@ -92,6 +101,39 @@ elseif <expr2> BODY
 elseif <expr3> BODY
 ...
 else BODY
+
+
+
+## arrays
+
+# you can reserve an array and store it's address
+cpy .1, [:10] # reserve space for 10 elements
+
+# or you can use an array literal
+cpy .1, [1, 20, 300, 4000] # reserve array with 4 elements, [1, 20, 300, 4000]
+
+# you can access the value of an array's field like this
+# ADDRESS->INDEX
+# for example:
+*1->0 # gets the first element
+
+# you can also assign elements
+# ADDRESS->INDEX = VALUE
+# for example:
+*1->0 = 10
+
+# you can quickly print the representation of an array
+# wln ~ADDRESS
+wln ~*1
+
+
+## the '~' operator
+
+this operator simply takes an address and returns the value that the address refers to.
+we use it to print arrays for example; arrays simply print a simple representation of themselves when printed.
+
+
+
 
 
 # enjoy!

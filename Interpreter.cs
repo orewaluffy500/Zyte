@@ -63,6 +63,8 @@ class Interpreter(BodyNode body)
         // ARRAY-RELATED
         else if (node is ReserveArrayNode reserveArrayNode)                 return VisitReserveArray(reserveArrayNode);
         else if (node is ArrayNode arrayNode)                               return VisitArray(arrayNode);
+        else if (node is FieldAccessNode fieldAccessNode)                   return VisitFieldAccess(fieldAccessNode);
+        else if (node is FieldAssignNode fieldAssignNode)                   return VisitFieldAssign(fieldAssignNode);
 
         return new ZNull(node.Pos);
     }
@@ -487,5 +489,37 @@ class Interpreter(BodyNode body)
         return new ZInt(address);
     }
 
+    public VisitResult VisitFieldAccess(FieldAccessNode node)
+    {
+        ZInt address = Expect<ZInt>(Visit(node.Address));
 
+        ZValue field = Visit(node.Field);
+
+        ZValue instance = Memory.GetExternal(address.Value, node.Pos);
+
+        if (instance is ZArray array)
+        {
+            ZInt index = Expect<ZInt>(field);
+            return array.GetElement(index.Value, node.Pos);
+        }
+
+        return new ZNull(node.Pos);
+    }
+
+    public VisitResult VisitFieldAssign(FieldAssignNode node)
+    {
+        ZInt address = Expect<ZInt>(Visit(node.Address));
+        ZValue field = Visit(node.Field);
+        ZValue value = Visit(node.Value);
+
+        ZValue instance = Memory.GetExternal(address.Value, node.Pos);
+
+        if (instance is ZArray array)
+        {
+            ZInt index = Expect<ZInt>(field);
+            return array.SetElement(index.Value, value, node.Pos);
+        }
+
+        return new ZNull(node.Pos);
+    }
 }

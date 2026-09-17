@@ -101,7 +101,7 @@ class Parser(Token[] tokens, string filename)
         else if (token.Type == TokenType.Mul)
         {
             Next();
-            ASTNode index = Factor();
+            ASTNode index = Atom();
             return new DereferenceNode(index)
             {
                 Pos = start
@@ -111,7 +111,7 @@ class Parser(Token[] tokens, string filename)
         else if (token.Type == TokenType.Squiggle)
         {
             Next();
-            ASTNode address = Factor();
+            ASTNode address = Atom();
             return new DereferenceExtNode(address)
             {
                 Pos = start
@@ -121,7 +121,7 @@ class Parser(Token[] tokens, string filename)
         else if (token.Type == TokenType.Plus || token.Type == TokenType.Minus)
         {
             Next();
-            ASTNode value = Factor();
+            ASTNode value = Atom();
             return new UnaryOperNode(token, value)
             {
                 Pos = start
@@ -145,7 +145,7 @@ class Parser(Token[] tokens, string filename)
         else if (token.Type == TokenType.Increment || token.Type == TokenType.Decrement)
         {
             Next();
-            ASTNode value = Factor();
+            ASTNode value = Atom();
 
             return new ChangeValueNode(token, value)
             {
@@ -156,7 +156,7 @@ class Parser(Token[] tokens, string filename)
         else if (token.IsKeyword("not"))
         {
             Next();
-            ASTNode value = Factor();
+            ASTNode value = Atom();
 
             return new NotNode(value)
             {
@@ -176,7 +176,7 @@ class Parser(Token[] tokens, string filename)
         else if (token.Type == TokenType.Modulo)
         {
             Next();
-            ASTNode index = Factor();
+            ASTNode index = Atom();
 
             return new ArgumentAccessNode(index)
             {
@@ -293,6 +293,28 @@ class Parser(Token[] tokens, string filename)
             ASTNode returnValueNode = Term();
 
             return new CallNode(result, [..arguments], returnValueNode)
+            {
+                Pos = start
+            };
+        }
+
+        else if (Current.Type == TokenType.Arrow)
+        {
+            Next();
+            ASTNode fieldNode = Atom();
+
+            if (Current.Type == TokenType.Equals)
+            {
+                Next();
+                ASTNode valueNode = Expr();
+
+                return new FieldAssignNode(result, fieldNode, valueNode)
+                {
+                    Pos = start
+                };
+            }
+
+            return new FieldAccessNode(result, fieldNode)
             {
                 Pos = start
             };

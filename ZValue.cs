@@ -318,11 +318,22 @@ class ZArray : ZValue
 
     public ZValue GetElement(int index, Position site)
     {
-        if (index < 0 || index > Elements.Count)
+        if (index < 0 || index >= Elements.Count)
         {
             ErrorHandler.RTError("invalid array access", $"index '{index}' is out of bounds", site);
         }
 
+        return Elements[index];
+    }
+
+    public ZValue SetElement(int index, ZValue value, Position site)
+    {
+        if (index < 0 || index >= Elements.Count)
+        {
+            ErrorHandler.RTError("invalid array access", $"index '{index}' is out of bounds", site);
+        }
+
+        Elements[index] = value;
         return Elements[index];
     }
 

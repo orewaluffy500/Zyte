@@ -54,6 +54,11 @@ class Lexer(string source, string filename)
                     tokType = TokenType.Decrement;
                     Next();
                 }
+                else if (Current == '>')
+                {
+                    tokType = TokenType.Arrow;
+                    Next();
+                }
 
                 tokens.Add(new(tokType, start));
             }

@@ -375,3 +375,26 @@ class ArrayNode(ASTNode[] elements) : ASTNode
         return $"(ARRAY[{Elements.Length}] = {{{string.Join(", ", Elements)}}})";
     }
 }
+
+class FieldAccessNode(ASTNode addressNode, ASTNode fieldNode) : ASTNode
+{
+    public ASTNode Address = addressNode;
+    public ASTNode Field = fieldNode;
+
+    public override string ToString()
+    {
+        return $"(FIELD {Field} OF {Address})";
+    }
+}
+
+class FieldAssignNode(ASTNode addressNode, ASTNode fieldNode, ASTNode valueNode) : ASTNode
+{
+    public ASTNode Address = addressNode;
+    public ASTNode Field = fieldNode;
+    public ASTNode Value = valueNode;
+
+    public override string ToString()
+    {
+        return $"(FIELD {Field} OF {Address} = {Value})";
+    }
+}
