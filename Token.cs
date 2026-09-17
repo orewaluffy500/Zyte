@@ -3,9 +3,9 @@ namespace zyte;
 
 enum TokenType {
     String, Identifier, Keyword, Integer,
-    Plus, Minus, Mul, Div, Dot, Modulo, Colon, Comma, Equals,
+    Plus, Minus, Mul, Div, Dot, Modulo, Colon, Comma, Equals, Squiggle,
     Increment, Decrement, ShiftLeft, ShiftRight,
-    LeftParen, RightParen, LeftBrace, RightBrace,
+    LeftParen, RightParen, LeftBrace, RightBrace, LeftSqBrace, RightSqBrace,
     Newline, End
 }
 

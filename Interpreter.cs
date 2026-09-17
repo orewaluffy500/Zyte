@@ -23,7 +23,8 @@ class Interpreter(BodyNode body)
         // LITERALS & VALUES
         if (node is IntegerNode intNode)                                    return VisitInteger(intNode);
         else if (node is RegisterNode registerNode)                         return VisitRegister(registerNode);
-        else if (node is RegisterAccessNode registerAccessNode)             return VisitRegisterAccess(registerAccessNode);
+        else if (node is DereferenceNode dereferenceNode)                   return VisitDereference(dereferenceNode);
+        else if (node is DereferenceExtNode dereferenceExtNode)             return VisitDereferenceExt(dereferenceExtNode);
         else if (node is UnaryOperNode unaryOperNode)                       return VisitUnaryOper(unaryOperNode);
         else if (node is BinaryOperNode binaryOperNode)                     return VisitBinaryOper(binaryOperNode);
         else if (node is NotNode notNode)                                   return VisitNot(notNode);
@@ -58,6 +59,10 @@ class Interpreter(BodyNode body)
         else if (node is ReturnNode returnNode)                             return VisitReturn(returnNode);
         else if (node is CallNode callNode)                                 return VisitCall(callNode); 
         else if (node is FuncDefNode funcDefNode)                           return VisitFuncDef(funcDefNode);
+        
+        // ARRAY-RELATED
+        else if (node is ReserveArrayNode reserveArrayNode)                 return VisitReserveArray(reserveArrayNode);
+        else if (node is ArrayNode arrayNode)                               return VisitArray(arrayNode);
 
         return new ZNull(node.Pos);
     }
@@ -68,7 +73,7 @@ class Interpreter(BodyNode body)
     {
         if (value is T) return value.To<T>();
 
-        ErrorHandler.RTError("type mismatch", $"expected value of type {ZValue.GetLabelOf(typeof(T))}, got {ZValue.GetLabelOf(value.GetType())}", value.Pos);
+        ErrorHandler.RTError("type mismatch", $"expected {ZValue.GetLabelOf(typeof(T))}, got {ZValue.GetLabelOf(value.GetType())}", value.Pos);
 
         return value.To<T>(); // impossible since error handler aborts.
     }
@@ -111,15 +116,21 @@ class Interpreter(BodyNode body)
         };
     }
 
-    public VisitResult VisitRegisterAccess(RegisterAccessNode node)
+    public VisitResult VisitDereference(DereferenceNode node)
     {
         ZValue value = Visit(node.Index);
 
         if (value is ZRegister r) return Memory.GetRegister(r.Index);
         else if (value is ZInt i) return Memory.GetRegister(i.Value);
-        else if (value is ZArgumentCapture ac) return ac.Frame.GetArgument(ac.Index, node.Pos);
 
         return new ZNull(node.Pos);
+    }
+
+    public VisitResult VisitDereferenceExt(DereferenceExtNode node)
+    {
+        ZInt value = Expect<ZInt>(Visit(node.Address));
+
+        return Memory.GetExternal(value.Value, node.Pos);
     }
 
     public VisitResult VisitInteger(IntegerNode node)
@@ -386,8 +397,8 @@ class Interpreter(BodyNode body)
             ErrorHandler.RTError("invalid argument access", "cannot access function argument outside of function call!", node.Pos);
         }
 
-        ZInt index = Expect<ZInt>(Visit(node.Index));
-        return CallStack[^1].GetArgumentRef(index.Value, node.Pos);
+        ZInt index = Expect<ZInt>(value: Visit(node.Index));
+        return CallStack[^1].GetArgument(index.Value, node.Pos);
     }
 
     public VisitResult VisitReturn(ReturnNode node)
@@ -444,6 +455,37 @@ class Interpreter(BodyNode body)
         Memory.SetExternal(address, new ZFunctionDefinition(identifier, argumentCount, node.Body){ Pos = node.Pos }, node.Pos);
         Memory.Definitions[identifier] = address;
 
-        return new ZNull(node.Pos);
+        return new ZInt(address);
     }
+
+    // ARRAY-RELATED
+
+    public VisitResult VisitReserveArray(ReserveArrayNode node)
+    {
+        ZInt elementCount = Expect<ZInt>(Visit(node.ElementCount));
+
+        ZArray array = new(elementCount.Value);
+        int address = Memory.AddressCounter++;
+
+        Memory.SetExternal(address, array, node.Pos);
+        return new ZInt(address);
+    }
+
+    public VisitResult VisitArray(ArrayNode node)
+    {
+        List<ZValue> elements = [];
+
+        foreach (ASTNode elementNode in node.Elements)
+        {
+            elements.Add(Visit(elementNode));
+        }
+
+        ZArray array = new([.. elements]);
+        int address = Memory.AddressCounter++;
+        
+        Memory.SetExternal(address, array, node.Pos);
+        return new ZInt(address);
+    }
+
+
 }

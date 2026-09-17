@@ -89,13 +89,23 @@ class DiscardCaptureNode : ASTNode
 
 
 
-class RegisterAccessNode(ASTNode index) : ASTNode
+class DereferenceNode(ASTNode index) : ASTNode
 {
     public ASTNode Index = index;
 
     public override string ToString()
     {
-        return $"GETR({Index})";
+        return $"WHAT({Index})";
+    }
+}
+
+class DereferenceExtNode(ASTNode address) : ASTNode
+{
+    public ASTNode Address = address;
+
+    public override string ToString()
+    {
+        return $"EXT({Address})";
     }
 }
 
@@ -341,5 +351,27 @@ class ReturnNode(ASTNode? value) : ASTNode
     public override string ToString()
     {
         return $"(RETURN {Value})";
+    }
+}
+
+// ARRAY-RELATED
+
+class ReserveArrayNode(ASTNode elementCount) : ASTNode
+{
+    public ASTNode ElementCount = elementCount;
+
+    public override string ToString()
+    {
+        return $"(ARRAY[{ElementCount}])";
+    }
+}
+
+class ArrayNode(ASTNode[] elements) : ASTNode
+{
+    public ASTNode[] Elements = elements;
+
+    public override string ToString()
+    {
+        return $"(ARRAY[{Elements.Length}] = {{{string.Join(", ", Elements)}}})";
     }
 }

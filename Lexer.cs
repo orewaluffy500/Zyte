@@ -106,6 +106,12 @@ class Lexer(string source, string filename)
                 Next();
             }
 
+            else if (Current == '~')
+            {
+                tokens.Add(new(TokenType.Squiggle, Pos));
+                Next();
+            }
+
             else if (Current == '(')
             {
                 tokens.Add(new(TokenType.LeftParen, Pos));
@@ -115,6 +121,18 @@ class Lexer(string source, string filename)
             else if (Current == ')')
             {
                 tokens.Add(new(TokenType.RightParen, Pos));
+                Next();
+            }
+
+            else if (Current == '[')
+            {
+                tokens.Add(new(TokenType.LeftSqBrace, Pos));
+                Next();
+            }
+
+            else if (Current == ']')
+            {
+                tokens.Add(new(TokenType.RightSqBrace, Pos));
                 Next();
             }
 

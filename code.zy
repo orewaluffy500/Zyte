@@ -1,6 +1,0 @@
-func Hello {
-    wln "hello"
-}
-
-cpy .1, Hello
-(*1): _

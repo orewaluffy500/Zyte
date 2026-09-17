@@ -14,6 +14,7 @@ class Parser(Token[] tokens, string filename)
     public void Next()
     {
         Pos.Next(Current.Type == TokenType.Newline);
+        // Console.WriteLine(Current);
     }
 
     public void Eat(TokenType tt, Position site)
@@ -101,7 +102,17 @@ class Parser(Token[] tokens, string filename)
         {
             Next();
             ASTNode index = Factor();
-            return new RegisterAccessNode(index)
+            return new DereferenceNode(index)
+            {
+                Pos = start
+            };
+        }
+
+        else if (token.Type == TokenType.Squiggle)
+        {
+            Next();
+            ASTNode address = Factor();
+            return new DereferenceExtNode(address)
             {
                 Pos = start
             };
@@ -181,6 +192,54 @@ class Parser(Token[] tokens, string filename)
                 Pos = start
             };
         }
+
+        // array-related
+
+        else if (token.Type == TokenType.LeftSqBrace)
+        {
+            Next();
+
+            // handle reserving
+            if (Current.Type == TokenType.Colon)
+            {
+                Next();
+
+                ASTNode elementCount = Expr();
+                if (Current.Type != TokenType.RightSqBrace)
+                {
+                    ErrorHandler.SyntaxError("invalid array reservation", "expected closing ']'", Current.Pos);
+                }
+
+                Next(); // go past ']'
+                return new ReserveArrayNode(elementCount)
+                {
+                    Pos = start
+                };
+            }
+
+            // handle array literal
+
+            List<ASTNode> elements = [];
+            elements.Add(Expr());
+
+            while (Current.Type == TokenType.Comma)
+            {
+                Next();
+                elements.Add(Expr());
+            }
+
+            if (Current.Type != TokenType.RightSqBrace)
+            {
+                ErrorHandler.SyntaxError("invalid array literal", "expected closing ']'", Current.Pos);
+            }
+
+            Next(); // go past ']'
+            return new ArrayNode([..elements])
+            {
+                Pos = start
+            };
+        }
+
         
         return new NoNode()
         {

@@ -283,3 +283,51 @@ class ZFunctionDefinition(string id, int argCount, ASTNode body) : ZValue
         return $"<func {Id} : {ArgCount}";
     }
 }
+
+class ZArray : ZValue
+{
+    public List<ZValue> Elements = [];
+
+    public ZArray(int elementCount)
+    {
+        Expand(elementCount, new ZInt(0));
+    }
+
+    public ZArray(ZValue[] elements){
+        Elements.AddRange(elements);
+    }
+
+    public override ZValue Copy()
+    {
+        ZValue[] elements = [];
+        Elements.CopyTo(elements);
+
+        return new ZArray(0)
+        {
+            Elements = [.. elements]
+        };
+    }
+
+    public void Expand(int amount, ZValue value)
+    {
+        for (int i = 0; i < amount; i++)
+        {
+            Elements.Add(value);
+        }
+    }
+
+    public ZValue GetElement(int index, Position site)
+    {
+        if (index < 0 || index > Elements.Count)
+        {
+            ErrorHandler.RTError("invalid array access", $"index '{index}' is out of bounds", site);
+        }
+
+        return Elements[index];
+    }
+
+    public override string ToString()
+    {
+        return $"<arr {Elements.Count}[ {string.Join(", ", Elements)} ]>";
+    }
+}

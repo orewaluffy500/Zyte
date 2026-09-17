@@ -49,3 +49,6 @@ atom                : INT|STRING                        # values
                     : IDENTIFIER                        # symbol access node
                     : OCTAL factor                      # argument access
                     : KW:out
+                    : LSQB (expr COMMA)* RSQB           # simple array
+                    : LSQB COLON expr RSQB              # reserve n elements as array
+                    : SQUIGGLE factor                   # dereference external address (SQUIGGLE is '~')
