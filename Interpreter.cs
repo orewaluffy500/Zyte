@@ -225,8 +225,9 @@ class Interpreter
     public VisitResult VisitPrintNode(PrintNode node)
     {
         ZValue message = Visit(node.Value);
+        string repr = message is ZString s ? s.Value : message.ToString();
 
-        Console.Write(message);
+        Console.Write(repr);
         if (node.Newline) Console.WriteLine();
 
         return new ZNull(node.Pos);

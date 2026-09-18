@@ -151,6 +151,11 @@ fetch "path/to/module.zy"
 # length function
 len(addr_of_array): .1 # the length gets written into reg 1
 
+# string functions
+strcat(value): _ # append a value to the builder string
+strflush: .1 # flush the built string as a value into memory, and then write the address into the output register
+# you can then use ~(*1) afterwards to get the value of the string to print or other stuff.
+
 
 
 # enjoy!

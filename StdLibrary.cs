@@ -4,11 +4,14 @@ namespace zyte;
 class ZStandard
 {
     public Interpreter Interpreter;
+    public string BuilderString = "";
 
     public ZStandard(Interpreter interpreter)
     {
         Interpreter = interpreter;
         AddFunction(StdLen, 1, "len");
+        AddFunction(StdStrcat, 1, "strcat");
+        AddFunction(StdStrflush, 0, "strflush");
     }
 
     public void AddFunction(Action<ZValue[], ZCapture, Position> body, int argCount, string id)
@@ -36,5 +39,20 @@ class ZStandard
         ZArray array = Expect<ZArray>(Interpreter.Memory.GetExternal(addr.Value, site), site);
 
         output.Set(new ZInt(array.Elements.Count){ Pos = site });
+    }
+
+    public void StdStrcat(ZValue[] args, ZCapture output, Position site)
+    {
+        ZValue text = args[0];
+        BuilderString += text is ZString s ? s.Value : text.ToString();
+    }
+
+    public void StdStrflush(ZValue[] args, ZCapture output, Position site)
+    {
+        ZString flushedString = new(BuilderString){ Pos = site };
+        BuilderString = "";
+
+        Interpreter.Memory.ExternalMemory[++Interpreter.Memory.AddressCounter] = flushedString;
+        output.Set(new ZInt(Interpreter.Memory.AddressCounter){ Pos = site });
     }
 }

@@ -225,7 +225,7 @@ class ZString(string value) : ZValue
 
     public override string ToString()
     {
-        return $"{Value}";
+        return $"\"{Value}\"";
     }
 
     // Operations
