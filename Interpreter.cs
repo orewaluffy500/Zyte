@@ -1,14 +1,19 @@
 namespace zyte;
 
-class Interpreter(BodyNode body)
+class Interpreter
 {
-    public BodyNode Program = body;
+    public BodyNode Program;
     public Memory Memory = new(80);
+    public ZStandard StandardLib;
     public List<CallFrame> CallStack = [];
+    public Interpreter(BodyNode body)
+    {
+        Program = body;
+        StandardLib = new(this);
+    }
     public void Interpret()
     {
         ASTNode[] programBody = Program.Tree;
-        InterpretationContext context = new(Program);
         
         foreach (ASTNode node in programBody)
         {
@@ -65,6 +70,9 @@ class Interpreter(BodyNode body)
         else if (node is ArrayNode arrayNode)                               return VisitArray(arrayNode);
         else if (node is FieldAccessNode fieldAccessNode)                   return VisitFieldAccess(fieldAccessNode);
         else if (node is FieldAssignNode fieldAssignNode)                   return VisitFieldAssign(fieldAssignNode);
+
+        // MISC
+        else if (node is FetchNode fetchNode)                               return VisitFetch(fetchNode);
 
         return new ZNull(node.Pos);
     }
@@ -433,8 +441,21 @@ class Interpreter(BodyNode body)
 
         ZValue[] arguments = [..argumentList];
 
-        ZFunctionDefinition func = Expect<ZFunctionDefinition>(Memory.GetExternal(address.Value, node.Pos));
+        ZValue rawFunc = Memory.GetExternal(address.Value, node.Pos);
 
+        if (rawFunc is ZBuiltinFunc builtinFunc)
+        {
+            if (arguments.Length != builtinFunc.ArgCount)
+            {
+                ErrorHandler.RTError("invalid call", $"expected {builtinFunc.ArgCount} arguments, got {arguments.Length}", node.Pos);
+            }
+
+            builtinFunc.Body(arguments, output, node.Pos);
+            return new ZNull(node.Pos);
+        }
+
+
+        ZFunc func = Expect<ZFunc>(rawFunc);
         if (arguments.Length != func.ArgCount)
         {
             ErrorHandler.RTError("invalid call", $"expected {func.ArgCount} arguments, got {arguments.Length}", node.Pos);
@@ -454,7 +475,7 @@ class Interpreter(BodyNode body)
 
         int address = Memory.AddressCounter++;
 
-        Memory.SetExternal(address, new ZFunctionDefinition(identifier, argumentCount, node.Body){ Pos = node.Pos }, node.Pos);
+        Memory.SetExternal(address, new ZFunc(identifier, argumentCount, node.Body){ Pos = node.Pos }, node.Pos);
         Memory.Definitions[identifier] = address;
 
         return new ZInt(address);
@@ -519,6 +540,34 @@ class Interpreter(BodyNode body)
             ZInt index = Expect<ZInt>(field);
             return array.SetElement(index.Value, value, node.Pos);
         }
+
+        return new ZNull(node.Pos);
+    }
+
+
+    // MISC
+
+    public VisitResult VisitFetch(FetchNode node)
+    {
+        string fileName = node.FileNameToken.Value as string ?? "";
+
+        if (!File.Exists(fileName))
+        {
+            ErrorHandler.RTError("invalid fetch", $"unable to find file '{fileName}'", node.Pos);
+        }
+
+        string contents = File.ReadAllText(fileName);
+
+        Lexer lexer = new(contents, fileName);
+        Token[] tokens = lexer.MakeTokens();
+
+        Parser parser = new(tokens, fileName);
+        BodyNode body = (BodyNode) parser.Parse();
+
+        Interpreter interpreter = new(body);
+        interpreter.Memory = Memory;
+
+        interpreter.Interpret();
 
         return new ZNull(node.Pos);
     }

@@ -133,6 +133,23 @@ this operator simply takes an address and returns the value that the address ref
 we use it to print arrays for example; arrays simply print a simple representation of themselves when printed.
 
 
+## modules
+
+# you can import a module like this
+fetch "path/to/module.zy"
+
+# modules are just zyte files executed at runtime.
+# they share the same register file and definitions and address space as the current module
+# meaning along with the importer being able to use stuff from the importee
+# the importee can also use stuff that the importee "thinks" will be defined in the importer when its imported.
+# the "examples/engine_importable.zy" file is an example of this
+# it calls a tick function that doesn't exist in the file itself, instead the importer is expected to define it and then call the start function.
+
+
+## standard library functions
+
+# length function
+len(addr_of_array): .1 # the length gets written into reg 1
 
 
 

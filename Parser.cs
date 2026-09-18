@@ -710,6 +710,20 @@ class Parser(Token[] tokens, string filename)
             };
         }
 
+        else if (token.IsKeyword("fetch"))
+        {
+            Next();
+            if (Current.Type != TokenType.String)
+            {
+                ErrorHandler.SyntaxError("invalid fetch", "expected string literal as file name", Current.Pos);
+            }
+
+            return new FetchNode(Current)
+            {
+                Pos = start
+            };
+        }
+
         return Expr();
     }
 }

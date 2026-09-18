@@ -1,0 +1,8 @@
+func start {
+    while 1 {
+        tick: .1
+        if not *1 {
+            break
+        }
+    }
+}

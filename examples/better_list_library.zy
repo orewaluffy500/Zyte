@@ -1,0 +1,23 @@
+func new_list : 1 {
+    cpy out, [:+=%0]
+}
+
+func append : 1 {
+    *out->0 = +=(*out->0)
+    *out->(*out->0) = %0
+}
+
+func for_each : 1 {
+    for .80 = 1 to *out->0 {
+        (%0)(*out->*80): _
+    }
+}
+
+func pop {
+    *out->0 = -=(*out->0)
+}
+
+func erase : 1 {
+    *out->%0 = *out->(*out->0)
+    *out->0 = -=(*out->0)
+}

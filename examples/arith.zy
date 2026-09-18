@@ -1,0 +1,20 @@
+func add : 2 {
+    cpy out, %0
+    for _ = 1 to %1 {
+        cpy out, +=*out
+    }
+}
+
+func sub : 2 {
+    cpy out, %0
+    for _ = 1 to %1 {
+        cpy out, -=*out
+    }
+}
+
+func mul : 2 {
+    cpy out, %0
+    for _ = 2 to %1 {
+        add(*out, %0): out
+    }
+}

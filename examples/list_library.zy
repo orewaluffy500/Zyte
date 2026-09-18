@@ -1,0 +1,35 @@
+# how our list library works:
+# makeList: creates a new list, the list will have its lenght stored in its first element
+# push: increments the first element and uses it as an index to "push" a new value
+# foreach: goes through each element starting from index 1 (excludes the length element) and executes %0 as a func
+
+
+# Makes a list
+func makeList : 1 {
+    cpy out, [:+=%0]
+}
+
+# appends to the list
+func push : 1 {
+    *out->0 = +=(*out->0) # increase the index
+    cpy .10, *out->0 # copy the current index to reg 10
+    *out->*10 = %0 # set value at that index to our value to be pushed
+}
+
+# executes %0 as a func for each of a list's elements excluding the first because that's the length
+func foreach : 1 {
+    cpy .11, *out->0
+    for .12 = 1 to *11 {
+        (%0)(*out->*12): _
+    }
+}
+
+func print : 1 {
+    wln %0
+}
+
+makeList(10): .1
+push(20): .1
+push(30): .1
+push(40): .1
+foreach(print): .1

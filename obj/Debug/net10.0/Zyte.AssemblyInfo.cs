@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Zyte")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+27044b4882af052a991900ad461d61eb52004ad7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b6939ded02f5c66d753fdd711a3ea42531d2a247")]
 [assembly: System.Reflection.AssemblyProductAttribute("Zyte")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Zyte")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

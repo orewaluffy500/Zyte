@@ -13,5 +13,6 @@ class KeywordClass
         "and", "or", "xor", "not",                            // LOGICAL
         "eq", "gt", "lt",                                    // CONDITIONAL
         "func", "return", "out",                            // FUNC-RELATED
+        "fetch",                                           // MISC
     ];
 }

@@ -398,3 +398,17 @@ class FieldAssignNode(ASTNode addressNode, ASTNode fieldNode, ASTNode valueNode)
         return $"(FIELD {Field} OF {Address} = {Value})";
     }
 }
+
+
+
+
+// MISC
+
+class FetchNode(Token filenameToken) : ASTNode
+{
+    public Token FileNameToken = filenameToken;
+    public override string ToString()
+    {
+        return $"(IMPORT {FileNameToken})";
+    }
+}

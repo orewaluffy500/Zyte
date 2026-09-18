@@ -62,6 +62,13 @@ abstract class ZCapture(Interpreter interpreter) : ZValue
     public Interpreter Interpreter = interpreter;
 
     public abstract void Set(ZValue value);
+    public abstract ZValue GetRaw();
+    public ZValue Get()
+    {
+        ZValue value = GetRaw();
+        value.Pos = Pos;
+        return value;
+    }
 }
 
 
@@ -160,6 +167,11 @@ class ZRegister(int index, Interpreter interpreter) : ZCapture(interpreter)
         return new ZRegister(Index, Interpreter);
     }
 
+    public override ZValue GetRaw()
+    {
+        return Interpreter.Memory.GetRegister(Index);
+    }
+
     public override void Set(ZValue value)
     {
         if (value is not ZInt)
@@ -181,6 +193,11 @@ class ZDiscardCapture(Interpreter interpreter) : ZCapture(interpreter)
     public override ZValue Copy()
     {
         return new ZDiscardCapture(Interpreter);
+    }
+
+    public override ZValue GetRaw()
+    {
+        return new ZNull(Pos);
     }
 
     public override void Set(ZValue value)
@@ -219,31 +236,6 @@ class ZString(string value) : ZValue
     }
 }
 
-class ZArgumentCapture(CallFrame frame, int index, Interpreter interpreter) : ZCapture(interpreter)
-{
-    public CallFrame Frame = frame;
-    public int Index = index;
-
-    public override ZValue Copy()
-    {
-        return new ZArgumentCapture(Frame, Index, Interpreter);
-    }
-
-    public override void Set(ZValue value)
-    {
-        ZValue arg = Frame.Arguments[Index];
-        if (arg is ZCapture c)
-        {
-            c.Set(value);
-        }
-    }
-
-    public override string ToString()
-    {
-        return $"ARG({Index})";
-    }
-}
-
 
 
 class ZNull(Position pos) : ZValue
@@ -264,7 +256,7 @@ class ZNull(Position pos) : ZValue
 
 
 
-class ZFunctionDefinition(string id, int argCount, ASTNode body) : ZValue
+class ZFunc(string id, int argCount, ASTNode body) : ZValue
 {
     public string Id = id;
     public int ArgCount = argCount;
@@ -272,7 +264,7 @@ class ZFunctionDefinition(string id, int argCount, ASTNode body) : ZValue
 
     public override ZValue Copy()
     {
-        return new ZFunctionDefinition(Id, ArgCount, Body)
+        return new ZFunc(Id, ArgCount, Body)
         {
             Pos = Pos
         };
@@ -283,6 +275,28 @@ class ZFunctionDefinition(string id, int argCount, ASTNode body) : ZValue
         return $"<func {Id} : {ArgCount}";
     }
 }
+
+class ZBuiltinFunc(Action<ZValue[], ZCapture, Position> body, int argCount) : ZValue
+{
+    public Action<ZValue[], ZCapture, Position> Body = body;
+    public int ArgCount = argCount;
+    public override ZValue Copy()
+    {
+        return new ZBuiltinFunc(Body, ArgCount)
+        {
+            Pos = Pos
+        };
+    }
+
+    public override string ToString()
+    {
+        return "<builtin func>";
+    }
+}
+
+
+
+
 
 class ZArray : ZValue
 {

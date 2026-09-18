@@ -11,6 +11,7 @@ controls            : KW:if expr NEWLINE* LBRACE nodes RBRACE
                     : KW:while expr NEWLINE* LBRACE nodes RBRACE
                     : KW:for term = expr KW:to expr (KW:step expr)? nodes
                     : KW:func IDENTIFIER (COLON INTEGER)? expr
+                    : KW:fetch STRING
 
 expr                : keyword
 
